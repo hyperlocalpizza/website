@@ -14,7 +14,8 @@
   // State
   // ---------------------------------------------------------------------------
   const CART_KEY = "vipizza_cart";
-  const SERVICE_AREA = /torino|moncalieri|nichelino|beinasco/i;
+  // Update this regex for the actual delivery area you serve.
+  const SERVICE_AREA = /Bloomfield Hills|Bloomfield Hills, Michigan|Bloomfield Hills MI|Bloomfield Hills, MI/i;
 
   let menuItems = [];
   let categories = [];
