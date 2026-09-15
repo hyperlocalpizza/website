@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VIPizza — Pizza made right</title>
+  <meta name="description" content="Order your favorite pizza from VIPizza. Choose from the menu, customize and get your pizza still steaming." />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/storefront.css" />
+</head>
+<body>
+  <!-- ===== Header ===== -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="#menu" class="brand">
+        <span class="brand-mark" aria-hidden="true">✦</span>
+        <span class="brand-name">VIPizza</span>
+      </a>
+      <nav class="header-nav" aria-label="Main navigation">
+        <a href="#menu" data-i18n="nav.menu">Menu</a>
+        <a href="#info" data-i18n="nav.info">Info</a>
+        <a href="admin.html" class="nav-admin" data-i18n="nav.admin">Staff area</a>
+      </nav>
+      <div class="header-actions">
+        <div id="lang-switcher" class="lang-switcher" aria-label="Language"></div>
+        <button id="cart-toggle" class="cart-toggle" data-i18n-aria="cart.open" aria-label="Open cart">
+          <span class="cart-icon" aria-hidden="true">🛒</span>
+          <span id="cart-count" class="cart-count" hidden>0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== Hero ===== -->
+  <section class="hero">
+    <div class="container hero-inner">
+      <p class="hero-eyebrow" data-i18n="hero.eyebrow">Pizza made right</p>
+      <h1 class="hero-title" data-i18n-html="hero.title">Your hot moment,<br />fresh out of the oven.</h1>
+      <p class="hero-sub" data-i18n="hero.sub">Choose from the menu, customize your pizza and get it still steaming.</p>
+      <a href="#menu" class="btn btn-primary btn-lg" data-i18n="hero.cta">Explore the menu</a>
+    </div>
+  </section>
+
+  <!-- ===== Menu ===== -->
+  <main>
+    <section id="menu" class="section">
+      <div class="container">
+        <div class="section-head">
+          <p class="eyebrow" data-i18n="menu.eyebrow">The menu</p>
+          <h2 class="section-title" data-i18n="menu.title">Choose your pizza</h2>
+          <p id="menu-status" class="menu-status" role="status"></p>
+        </div>
+        <div id="menu-categories" class="menu-categories"></div>
+      </div>
+    </section>
+
+    <!-- ===== Info ===== -->
+    <section id="info" class="section section-alt">
+      <div class="container">
+        <div class="section-head">
+          <p class="eyebrow" data-i18n="info.eyebrow">Info</p>
+          <h2 class="section-title" data-i18n="info.title">How it works</h2>
+        </div>
+        <div class="info-grid">
+          <article class="info-card">
+            <span class="info-icon" aria-hidden="true">🍕</span>
+            <h3 data-i18n="info.choose.title">Choose</h3>
+            <p data-i18n="info.choose.desc">Pick your favorite pizzas from the menu and add them to the cart.</p>
+          </article>
+          <article class="info-card">
+            <span class="info-icon" aria-hidden="true">📞</span>
+            <h3 data-i18n="info.order.title">Order</h3>
+            <p data-i18n="info.order.desc">Enter your details and choose pickup or home delivery.</p>
+          </article>
+          <article class="info-card">
+            <span class="info-icon" aria-hidden="true">🔥</span>
+            <h3 data-i18n="info.enjoy.title">Enjoy</h3>
+            <p data-i18n="info.enjoy.desc">Get your pizza still steaming, fresh out of the oven.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===== Footer ===== -->
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <p>© <span id="year"></span> VIPizza — <span data-i18n="footer.tagline">Pizza made right.</span></p>
+      <a href="admin.html" data-i18n="footer.admin">Staff area</a>
+    </div>
+  </footer>
+
+  <!-- ===== Cart drawer ===== -->
+  <div id="cart-overlay" class="overlay" hidden></div>
+  <aside id="cart-drawer" class="cart-drawer" data-i18n-aria="cart.title" aria-label="Your order" aria-hidden="true">
+    <div class="cart-drawer-head">
+      <h2 data-i18n="cart.title">Your order</h2>
+      <button id="cart-close" class="icon-btn" data-i18n-aria="cart.close" aria-label="Close cart">✕</button>
+    </div>
+    <div id="cart-items" class="cart-items"></div>
+    <div class="cart-drawer-foot">
+      <div class="cart-total">
+        <span data-i18n="cart.total">Total</span>
+        <span id="cart-total" class="cart-total-value">€ 0,00</span>
+      </div>
+      <button id="checkout-btn" class="btn btn-primary btn-block" data-i18n="cart.checkout" disabled>Proceed to order</button>
+    </div>
+  </aside>
+
+  <!-- ===== Checkout modal ===== -->
+  <div id="checkout-modal" class="modal" hidden>
+    <div class="modal-backdrop" data-close-modal></div>
+    <div class="modal-panel">
+      <div class="modal-head">
+        <h2 data-i18n="checkout.title">Complete your order</h2>
+        <button class="icon-btn" data-close-modal data-i18n-aria="checkout.close" aria-label="Close">✕</button>
+      </div>
+      <form id="checkout-form" novalidate>
+        <div class="form-grid">
+          <label class="field">
+            <span data-i18n="checkout.name">Full name</span>
+            <input type="text" id="customer-name" name="customer_name" required autocomplete="name" data-i18n-placeholder="checkout.name.ph" placeholder="Mario Rossi" />
+          </label>
+          <label class="field">
+            <span data-i18n="checkout.phone">Phone</span>
+            <input type="tel" id="customer-phone" name="phone" required autocomplete="tel" data-i18n-placeholder="checkout.phone.ph" placeholder="333 123 4567" />
+          </label>
+        </div>
+
+        <fieldset class="field">
+          <legend data-i18n="checkout.type">Pickup or delivery</legend>
+          <div class="radio-row">
+            <label class="radio-card">
+              <input type="radio" name="delivery_type" value="pickup" checked />
+              <span class="radio-label" data-i18n="checkout.pickup">Pickup</span>
+            </label>
+            <label class="radio-card">
+              <input type="radio" name="delivery_type" value="delivery" />
+              <span class="radio-label" data-i18n="checkout.delivery">Delivery</span>
+            </label>
+          </div>
+        </fieldset>
+
+        <label class="field" id="slot-field">
+          <span data-i18n="checkout.slot">Pickup time</span>
+          <select id="slot-select" name="slot_id">
+            <option value="" data-i18n="checkout.slot.ph">Select a time</option>
+          </select>
+          <small id="slot-hint" class="field-hint"></small>
+        </label>
+
+        <label class="field" id="address-field">
+          <span data-i18n="checkout.address">Delivery address</span>
+          <input type="text" id="customer-address" name="address" autocomplete="street-address" data-i18n-placeholder="checkout.address.ph" placeholder="Via Roma 12, Torino" />
+          <small id="address-hint" class="field-hint"></small>
+        </label>
+
+        <label class="field">
+          <span data-i18n="checkout.notes">Kitchen notes (optional)</span>
+          <textarea id="order-notes" name="notes" rows="3" data-i18n-placeholder="checkout.notes.ph" placeholder="E.g. no onion, well done..."></textarea>
+        </label>
+
+        <p id="checkout-error" class="form-error" role="alert" hidden></p>
+
+        <button type="submit" id="submit-order" class="btn btn-primary btn-block btn-lg" data-i18n="checkout.submit">
+          Send order
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== Order confirmation modal ===== -->
+  <div id="confirmation-modal" class="modal" hidden>
+    <div class="modal-backdrop"></div>
+    <div class="modal-panel modal-panel--center">
+      <div class="confirmation">
+        <span class="confirmation-icon" aria-hidden="true">✓</span>
+        <h2 data-i18n="confirm.title">Order received!</h2>
+        <p class="confirmation-text" data-i18n="confirm.text">Thank you! Your order has been sent to the kitchen.</p>
+        <div class="confirmation-code">
+          <span data-i18n="confirm.codeLabel">Your tracking code</span>
+          <strong id="confirmation-tracking">—</strong>
+        </div>
+        <p class="confirmation-note" data-i18n="confirm.note">Keep this code to pick up or track your order.</p>
+        <button id="confirmation-close" class="btn btn-primary btn-block" data-i18n="confirm.close">Perfect</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Scripts ===== -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/storefront.js"></script>
+</body>
+</html>

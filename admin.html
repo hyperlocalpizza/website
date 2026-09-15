@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VIPizza — Staff Area</title>
+  <meta name="robots" content="noindex" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/admin.css" />
+</head>
+<body>
+  <!-- ===== Login view ===== -->
+  <section id="login-view" class="login-view" hidden>
+    <div class="login-card">
+      <div class="login-brand">
+        <span class="brand-mark" aria-hidden="true">✦</span>
+        <span class="brand-name">VIPizza</span>
+      </div>
+      <div class="login-lang">
+        <div id="lang-switcher" class="lang-switcher" aria-label="Language"></div>
+      </div>
+      <h1 class="login-title" data-i18n="admin.login.title">Staff area</h1>
+      <p class="login-sub" data-i18n="admin.login.sub">Sign in to manage orders, times, inventory and menu.</p>
+
+      <form id="login-form" novalidate>
+        <label class="field">
+          <span data-i18n="admin.login.email">Email</span>
+          <input type="email" id="login-email" name="email" required autocomplete="email" data-i18n-placeholder="admin.login.email.ph" placeholder="staff@vipizza.it" />
+        </label>
+        <label class="field">
+          <span data-i18n="admin.login.password">Password</span>
+          <input type="password" id="login-password" name="password" required autocomplete="current-password" placeholder="••••••••" />
+        </label>
+        <p id="login-error" class="form-error" role="alert" hidden></p>
+        <button type="submit" id="login-btn" class="btn btn-primary btn-block btn-lg" data-i18n="admin.login.btn">Sign in</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- ===== Dashboard view ===== -->
+  <section id="dashboard-view" class="dashboard" hidden>
+    <header class="dashboard-header">
+      <div class="container dashboard-header-inner">
+        <div class="dashboard-brand">
+          <span class="brand-mark" aria-hidden="true">✦</span>
+          <span class="brand-name">VIPizza</span>
+          <span class="dashboard-badge">KDS</span>
+        </div>
+        <div class="dashboard-actions">
+          <div id="lang-switcher" class="lang-switcher" aria-label="Language"></div>
+          <span id="connection-status" class="connection-status">Connecting...</span>
+          <span id="user-email" class="user-email"></span>
+          <button id="logout-btn" class="btn btn-outline btn-sm" data-i18n="admin.logout">Sign out</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="container dashboard-main">
+      <!-- ===== Tab navigation ===== -->
+    <nav class="tabs container" aria-label="Dashboard sections">
+      <button class="tab is-active" data-tab="orders" data-i18n="admin.tab.orders">Orders</button>
+      <button class="tab" data-tab="slots" data-i18n="admin.tab.slots">Times</button>
+      <button class="tab" data-tab="inventory" data-i18n="admin.tab.inventory">Inventory</button>
+      <button class="tab" data-tab="menu" data-i18n="admin.tab.menu">Menu</button>
+    </nav>
+
+    <main class="container dashboard-main">
+      <!-- ===== Orders view ===== -->
+      <section id="view-orders" class="view is-active">
+        <div class="dashboard-head">
+          <div>
+            <p class="eyebrow" data-i18n="admin.orders.eyebrow">Orders</p>
+            <h1 class="dashboard-title" data-i18n="admin.orders.title">Orders in queue</h1>
+          </div>
+          <div class="dashboard-stats">
+            <span class="stat"><strong id="stat-active">0</strong> <span data-i18n="admin.orders.active">active</span></span>
+            <span class="stat"><strong id="stat-today">0</strong> <span data-i18n="admin.orders.today">today</span></span>
+          </div>
+        </div>
+        <div id="orders-feed" class="orders-feed">
+          <p class="empty-state" data-i18n="admin.orders.empty">No orders. Waiting for new ones...</p>
+        </div>
+      </section>
+
+      <!-- ===== Slots view ===== -->
+      <section id="view-slots" class="view">
+        <div class="dashboard-head">
+          <div>
+            <p class="eyebrow" data-i18n="admin.slots.eyebrow">Times</p>
+            <h1 class="dashboard-title" data-i18n="admin.slots.title">Pickup slots</h1>
+          </div>
+          <button id="slot-add-btn" class="btn btn-primary btn-sm" data-i18n="admin.slots.add">+ New slot</button>
+        </div>
+        <div id="slots-feed" class="slots-feed">
+          <p class="empty-state" data-i18n="admin.slots.empty">No slots configured.</p>
+        </div>
+      </section>
+
+      <!-- ===== Inventory view ===== -->
+      <section id="view-inventory" class="view">
+        <div class="dashboard-head">
+          <div>
+            <p class="eyebrow" data-i18n="admin.inv.eyebrow">Inventory</p>
+            <h1 class="dashboard-title" data-i18n="admin.inv.title">Inventory</h1>
+          </div>
+          <button id="inventory-add-btn" class="btn btn-primary btn-sm" data-i18n="admin.inv.add">+ New item</button>
+        </div>
+        <div id="inventory-feed" class="inventory-feed">
+          <p class="empty-state" data-i18n="admin.inv.empty">No items in stock.</p>
+        </div>
+      </section>
+
+      <!-- ===== Menu view ===== -->
+      <section id="view-menu" class="view">
+        <div class="dashboard-head">
+          <div>
+            <p class="eyebrow" data-i18n="admin.menu.eyebrow">Menu</p>
+            <h1 class="dashboard-title" data-i18n="admin.menu.title">Menu management</h1>
+          </div>
+          <button id="menu-add-btn" class="btn btn-primary btn-sm" data-i18n="admin.menu.add">+ New pizza</button>
+        </div>
+        <div id="menu-feed" class="menu-feed">
+          <p class="empty-state" data-i18n="admin.menu.empty">No items in the menu.</p>
+        </div>
+      </section>
+    </main>
+  </section>
+
+  <!-- ===== Generic modal (used for add/edit forms) ===== -->
+  <div id="editor-modal" class="modal" hidden>
+    <div class="modal-backdrop" data-close-modal></div>
+    <div class="modal-panel">
+      <div class="modal-head">
+        <h2 id="editor-title" data-i18n="admin.editor.title">Edit</h2>
+        <button class="icon-btn" data-close-modal data-i18n-aria="admin.editor.close" aria-label="Close">✕</button>
+      </div>
+      <form id="editor-form" novalidate>
+        <div id="editor-fields" class="editor-fields"></div>
+        <p id="editor-error" class="form-error" role="alert" hidden></p>
+        <button type="submit" id="editor-submit" class="btn btn-primary btn-block" data-i18n="admin.editor.save">Save</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== Scripts ===== -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>
