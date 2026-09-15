@@ -1,20 +1,25 @@
 /**
  * VIPizza — Supabase client configuration.
  *
- * Central place to initialize the Supabase client for the whole site.
- * Replace the placeholder constants below with your project's values:
+ * This project was previously configured for a local Docker / CLI Supabase
+ * instance. Keep the old values below commented if you need to quickly revert.
+ *
+ * For the hosted project, replace the placeholders with your Supabase project
+ * values from the dashboard: Settings → API
  *
  *   SUPABASE_URL      -> https://<your-project-ref>.supabase.co
  *   SUPABASE_ANON_KEY -> the public "anon" key (safe to expose in the browser)
  *
- * For local development with the Supabase CLI, use:
- *   SUPABASE_URL      -> http://127.0.0.1:54321
- *   SUPABASE_ANON_KEY -> the anon key printed by `supabase status`
- *
  * NOTE: The anon key is public by design. Never put the service_role key here.
  */
-const SUPABASE_URL = "http://localhost:8000";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOiAxNzk5NTM1NjAwCn0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE";
+
+// Legacy local Docker / CLI compatibility (uncomment this block to revert):
+// const SUPABASE_URL = "http://localhost:8000";
+// const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOiAxNzk5NTM1NjAwCn0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE";
+
+// Hosted Supabase project values
+const SUPABASE_URL = "https://qiqjqqejegsworbdbjva.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_vKdnmcbja8fqpPg04RAixA_DwI0kkfM";
 
 // Create a single shared client instance.
 // The Supabase CDN script may not have finished loading when this file runs,
