@@ -20,6 +20,18 @@
   padding-bottom: 16px;
 }
 
+.header-inner > .brand {
+  flex: 0 0 auto;
+}
+
+.brand-logo {
+  display: block;
+  flex: 0 0 116px;
+  width: 116px;
+  height: 88px;
+  object-fit: contain;
+}
+
 .header-nav {
   display: flex;
   align-items: center;
@@ -102,12 +114,29 @@
   margin-bottom: 16px;
 }
 
+.hero-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  margin-bottom: 20px;
+}
+
 .hero-title {
+  flex: 1;
   font-size: clamp(36px, 6vw, 60px);
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 0.98;
-  margin-bottom: 20px;
+  margin-bottom: 0;
+}
+
+.hero-logo {
+  display: block;
+  flex: 0 0 600px;
+  width: 600px;
+  height: 440px;
+  object-fit: contain;
 }
 
 .hero-sub {
@@ -581,12 +610,44 @@
 
 /* --- Responsive ----------------------------------------------------------- */
 @media (max-width: 640px) {
+  .header-inner {
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .header-inner > .brand {
+    order: 0;
+  }
+
+  .header-inner > .header-actions {
+    order: 1;
+  }
+
+  .header-inner > .header-nav {
+    order: 2;
+    flex: 1 0 100%;
+    justify-content: center;
+  }
+
   .header-nav {
-    gap: 14px;
+    gap: 10px;
+    font-size: 13px;
   }
 
   .header-nav .nav-admin {
     display: none;
+  }
+
+  .header-actions {
+    gap: 6px;
+  }
+
+  .header-actions .lang-switcher {
+    gap: 2px;
+  }
+
+  .header-actions .lang-btn {
+    padding: 4px 5px;
   }
 
   .form-grid {
@@ -601,7 +662,61 @@
     padding: 48px 0 40px;
   }
 
+  .hero-title-row {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .hero-title {
+    order: 1;
+    text-align: center;
+  }
+
+  .hero-logo {
+    order: 0;
+    flex: 0 1 auto;
+    width: min(100%, 440px);
+    height: 300px;
+  }
+
   .section {
     padding: 48px 0;
+  }
+}
+
+@media (max-width: 360px) {
+  .header-inner {
+    gap: 6px;
+  }
+
+  .header-nav {
+    gap: 8px;
+    font-size: 12px;
+  }
+
+  .header-actions {
+    gap: 4px;
+  }
+
+  .header-actions .lang-flag {
+    display: none;
+  }
+
+  .header-actions .lang-btn {
+    padding: 4px 3px;
+    font-size: 11px;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 960px) {
+  .hero-title-row {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .hero-logo {
+    flex: 0 1 auto;
+    width: min(100%, 600px);
+    height: 360px;
   }
 }

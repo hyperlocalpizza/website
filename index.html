@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>VIPizza — Pizza made right</title>
   <meta name="description" content="Order your favorite pizza from VIPizza. Choose from the menu, customize and get your pizza still steaming." />
+  <link rel="preload" as="image" href="hlplogopizza-fast.jpg" fetchpriority="high" />
   <link rel="stylesheet" href="css/base.css" />
   <link rel="stylesheet" href="css/storefront.css" />
 </head>
@@ -13,8 +14,7 @@
   <header class="site-header">
     <div class="container header-inner">
       <a href="#menu" class="brand">
-        <span class="brand-mark" aria-hidden="true">✦</span>
-        <span class="brand-name">VIPizza</span>
+        <img class="brand-logo" src="hlplogopizza-fast.jpg" alt="VIPizza" decoding="async" />
       </a>
       <nav class="header-nav" aria-label="Main navigation">
         <a href="#menu" data-i18n="nav.menu">Menu</a>
@@ -35,7 +35,10 @@
   <section class="hero">
     <div class="container hero-inner">
       <p class="hero-eyebrow" data-i18n="hero.eyebrow">Pizza made right</p>
-      <h1 class="hero-title" data-i18n-html="hero.title">Your hot moment,<br />fresh out of the oven.</h1>
+      <div class="hero-title-row">
+        <h1 class="hero-title" data-i18n-html="hero.title">Your hot moment,<br />fresh out of the oven.</h1>
+        <img class="hero-logo" src="hlplogopizza-fast.jpg" alt="VIPizza" fetchpriority="high" decoding="async" />
+      </div>
       <p class="hero-sub" data-i18n="hero.sub">Choose from the menu, customize your pizza and get it still steaming.</p>
       <a href="#menu" class="btn btn-primary btn-lg" data-i18n="hero.cta">Explore the menu</a>
     </div>
@@ -220,10 +223,10 @@
   </div>
 
   <!-- ===== Scripts ===== -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js"></script>
-  <script src="js/i18n.js"></script>
-  <script src="js/utils.js"></script>
-  <script src="js/storefront.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="js/config.js"></script>
+  <script defer src="js/i18n.js"></script>
+  <script defer src="js/utils.js"></script>
+  <script defer src="js/storefront.js"></script>
 </body>
 </html>

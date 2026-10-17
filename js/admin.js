@@ -20,6 +20,39 @@
   } = window.VIPizza.utils;
   const i18n = window.VIPizza.i18n;
   const t = (key, vars) => i18n.t(key, vars);
+  const CONTENT_GROUPS = [
+    {
+      title: "admin.content.groupHero",
+      fields: [
+        ["hero.eyebrow", "admin.content.heroEyebrow"],
+        ["hero.title", "admin.content.heroTitle"],
+        ["hero.sub", "admin.content.heroSub"],
+        ["hero.cta", "admin.content.heroCta"]
+      ]
+    },
+    {
+      title: "admin.content.groupMenu",
+      fields: [["menu.eyebrow", "admin.content.menuEyebrow"], ["menu.title", "admin.content.menuTitle"]]
+    },
+    {
+      title: "admin.content.groupInfo",
+      fields: [
+        ["info.eyebrow", "admin.content.infoEyebrow"],
+        ["info.title", "admin.content.infoTitle"],
+        ["info.choose.title", "admin.content.chooseTitle"],
+        ["info.choose.desc", "admin.content.chooseDesc"],
+        ["info.order.title", "admin.content.orderTitle"],
+        ["info.order.desc", "admin.content.orderDesc"],
+        ["info.enjoy.title", "admin.content.enjoyTitle"],
+        ["info.enjoy.desc", "admin.content.enjoyDesc"]
+      ]
+    },
+    {
+      title: "admin.content.groupFooter",
+      fields: [["footer.tagline", "admin.content.footerTagline"]]
+    }
+  ];
+  const CONTENT_LANGUAGES = ["en", "it", "es"];
 
   // ---------------------------------------------------------------------------
   // DOM references
@@ -44,6 +77,10 @@
     inventoryAddBtn: document.getElementById("inventory-add-btn"),
     menuFeed: document.getElementById("menu-feed"),
     menuAddBtn: document.getElementById("menu-add-btn"),
+    siteContentForm: document.getElementById("site-content-form"),
+    siteContentFields: document.getElementById("site-content-fields"),
+    siteContentStatus: document.getElementById("site-content-status"),
+    siteContentSave: document.getElementById("site-content-save"),
     editorModal: document.getElementById("editor-modal"),
     editorTitle: document.getElementById("editor-title"),
     editorForm: document.getElementById("editor-form"),
@@ -59,6 +96,8 @@
   let categories = [];
   let channel = null;
   let editorContext = null; // { kind, id }
+  let contentLanguage = "en";
+  let siteContentDrafts = { en: {}, it: {}, es: {} };
 
   // ---------------------------------------------------------------------------
   // Auth
@@ -123,7 +162,7 @@
     if (user) {
       els.userEmail.textContent = user.email || "";
       showDashboard();
-      await Promise.all([loadOrders(), loadSlots(), loadInventory(), loadMenu()]);
+      await Promise.all([loadOrders(), loadSlots(), loadInventory(), loadMenu(), loadSiteContent()]);
       setupRealtime();
     }
   }
@@ -509,6 +548,100 @@
     }
   }
 
+  function renderSiteContentFields() {
+    els.siteContentFields.textContent = "";
+    CONTENT_GROUPS.forEach((group) => {
+      const section = document.createElement("section");
+      section.className = "site-content-group";
+      const heading = document.createElement("h2");
+      heading.textContent = t(group.title);
+      section.appendChild(heading);
+
+      group.fields.forEach(([key, labelKey]) => {
+        const label = document.createElement("label");
+        label.className = "field site-content-field";
+        const caption = document.createElement("span");
+        caption.textContent = t(labelKey);
+        const textarea = document.createElement("textarea");
+        textarea.rows = key === "hero.title" ? 2 : 3;
+        textarea.maxLength = 500;
+        textarea.dataset.contentKey = key;
+        textarea.value = siteContentDrafts[contentLanguage][key] || "";
+        textarea.placeholder = i18n.getBaseText(key, contentLanguage).replace(/<br\s*\/?\s*>/gi, "\n");
+        label.append(caption, textarea);
+        section.appendChild(label);
+      });
+
+      els.siteContentFields.appendChild(section);
+    });
+  }
+
+  function captureSiteContentDrafts() {
+    els.siteContentFields.querySelectorAll("[data-content-key]").forEach((field) => {
+      siteContentDrafts[contentLanguage][field.dataset.contentKey] = field.value;
+    });
+  }
+
+  function renderSiteContent() {
+    document.querySelectorAll("[data-content-language]").forEach((button) => {
+      const active = button.dataset.contentLanguage === contentLanguage;
+      button.classList.toggle("is-active", active);
+      button.setAttribute("aria-pressed", active ? "true" : "false");
+    });
+    renderSiteContentFields();
+  }
+
+  async function loadSiteContent() {
+    try {
+      const { data, error } = await getClient()
+        .from("site_content")
+        .select("content_key, language, content");
+      if (error) throw error;
+      siteContentDrafts = { en: {}, it: {}, es: {} };
+      (data || []).forEach((entry) => {
+        siteContentDrafts[entry.language][entry.content_key] = entry.content;
+      });
+      renderSiteContent();
+    } catch (error) {
+      console.error("Failed to load site content:", error);
+      toast(t("admin.content.loadError"), "error");
+    }
+  }
+
+  async function saveSiteContent(event) {
+    event.preventDefault();
+    captureSiteContentDrafts();
+    const entries = CONTENT_LANGUAGES.flatMap((language) =>
+      CONTENT_GROUPS.flatMap((group) =>
+        group.fields.flatMap(([key]) => {
+          const content = (siteContentDrafts[language][key] || "").trim();
+          return content ? [{ content_key: key, language, content }] : [];
+        })
+      )
+    );
+
+    els.siteContentSave.disabled = true;
+    els.siteContentStatus.hidden = true;
+    try {
+      const { error } = await getClient().rpc("save_site_content", { p_entries: entries });
+      if (error) throw error;
+      i18n.setContentOverrides(entries.map(({ content_key, language, content }) => ({
+        key: content_key,
+        language,
+        content
+      })));
+      els.siteContentStatus.textContent = t("admin.content.saved");
+      els.siteContentStatus.hidden = false;
+      toast(t("admin.content.saved"), "success");
+    } catch (error) {
+      console.error("Failed to save site content:", error);
+      els.siteContentStatus.textContent = t("admin.content.saveError");
+      els.siteContentStatus.hidden = false;
+    } finally {
+      els.siteContentSave.disabled = false;
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // Editor modal (add / edit for slots, inventory, menu)
   // ---------------------------------------------------------------------------
@@ -879,6 +1012,14 @@
 
     // Editor modal
     els.editorForm.addEventListener("submit", handleEditorSubmit);
+    els.siteContentForm.addEventListener("submit", saveSiteContent);
+    document.querySelectorAll("[data-content-language]").forEach((button) => {
+      button.addEventListener("click", () => {
+        captureSiteContentDrafts();
+        contentLanguage = button.dataset.contentLanguage;
+        renderSiteContent();
+      });
+    });
     els.editorFields.addEventListener("click", (event) => {
       if (event.target.closest("#ingredient-add")) {
         addIngredientRow(els.editorFields.querySelector("#ingredient-rows"));
@@ -937,6 +1078,7 @@
       renderSlots();
       renderInventory();
       renderMenu();
+      renderSiteContent();
     });
   }
 
