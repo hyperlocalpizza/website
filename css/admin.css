@@ -29,6 +29,13 @@
   margin-bottom: 24px;
 }
 
+.admin-login-logo {
+  display: block;
+  width: 232px;
+  height: 176px;
+  object-fit: contain;
+}
+
 .login-lang {
   display: flex;
   justify-content: center;
@@ -77,6 +84,13 @@
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.admin-header-logo {
+  display: block;
+  width: 156px;
+  height: 116px;
+  object-fit: contain;
 }
 
 .dashboard-badge {
@@ -612,6 +626,86 @@
 }
 
 /* ============================================================================
+   Site content editor
+   ============================================================================ */
+.content-description {
+  max-width: 640px;
+  margin-top: 10px;
+  color: #b9aaa0;
+  font-family: var(--font-sans);
+  font-size: 14px;
+}
+
+.content-language-tabs {
+  display: flex;
+  gap: 4px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 0 24px;
+  border-bottom: 1px solid #514941;
+}
+
+.content-language {
+  min-height: 40px;
+  padding: 8px 14px;
+  border-bottom: 2px solid transparent;
+  color: #b9aaa0;
+  font-family: var(--font-sans);
+  font-size: 14px;
+}
+
+.content-language:hover,
+.content-language.is-active {
+  color: #fffaf3;
+}
+
+.content-language.is-active {
+  border-bottom-color: #e0a458;
+}
+
+.site-content-form {
+  max-width: 760px;
+}
+
+.site-content-group {
+  padding: 22px 0 6px;
+  border-top: 1px solid #514941;
+}
+
+.site-content-group h2 {
+  margin-bottom: 16px;
+  font-size: 20px;
+}
+
+.site-content-field textarea {
+  width: 100%;
+  min-height: 76px;
+  padding: 10px 12px;
+  border: 1px solid #514941;
+  border-radius: 6px;
+  background: #302b27;
+  color: #fffaf3;
+  resize: vertical;
+}
+
+.site-content-field textarea:focus {
+  border-color: #e0a458;
+  outline: 2px solid rgba(224, 164, 88, 0.2);
+}
+
+.site-content-field textarea::placeholder {
+  color: #a99a8e;
+  opacity: 0.85;
+}
+
+.content-status {
+  margin: 0 0 14px;
+  color: #8fca7a;
+  font-family: var(--font-sans);
+  font-size: 14px;
+}
+
+/* ============================================================================
    Editor modal
    ============================================================================ */
 .editor-fields {
@@ -710,6 +804,22 @@
 
 /* --- Responsive additions ------------------------------------------------- */
 @media (max-width: 640px) {
+  .dashboard-header-inner {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .dashboard-brand {
+    flex: 1 0 100%;
+    justify-content: center;
+  }
+
+  .dashboard-actions {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+  }
+
   .slot-actions,
   .inventory-actions,
   .menu-actions {

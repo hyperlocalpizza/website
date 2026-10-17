@@ -13,8 +13,7 @@
   <section id="login-view" class="login-view" hidden>
     <div class="login-card">
       <div class="login-brand">
-        <span class="brand-mark" aria-hidden="true">✦</span>
-        <span class="brand-name">VIPizza</span>
+        <img class="admin-login-logo" src="hlplogopizza-fast.jpg" alt="VIPizza" />
       </div>
       <div class="login-lang">
         <div id="lang-switcher" class="lang-switcher" aria-label="Language"></div>
@@ -42,8 +41,7 @@
     <header class="dashboard-header">
       <div class="container dashboard-header-inner">
         <div class="dashboard-brand">
-          <span class="brand-mark" aria-hidden="true">✦</span>
-          <span class="brand-name">VIPizza</span>
+          <img class="admin-header-logo" src="hlplogopizza-fast.jpg" alt="VIPizza" />
           <span class="dashboard-badge">KDS</span>
         </div>
         <div class="dashboard-actions">
@@ -62,6 +60,7 @@
       <button class="tab" data-tab="slots" data-i18n="admin.tab.slots">Times</button>
       <button class="tab" data-tab="inventory" data-i18n="admin.tab.inventory">Inventory</button>
       <button class="tab" data-tab="menu" data-i18n="admin.tab.menu">Menu</button>
+      <button class="tab" data-tab="content" data-i18n="admin.tab.content">Site content</button>
     </nav>
 
     <main class="container dashboard-main">
@@ -122,6 +121,26 @@
         <div id="menu-feed" class="menu-feed">
           <p class="empty-state" data-i18n="admin.menu.empty">No items in the menu.</p>
         </div>
+      </section>
+
+      <section id="view-content" class="view">
+        <div class="dashboard-head">
+          <div>
+            <p class="eyebrow" data-i18n="admin.content.eyebrow">Website</p>
+            <h1 class="dashboard-title" data-i18n="admin.content.title">Site content</h1>
+            <p class="content-description" data-i18n="admin.content.description">Edit customer-facing headings and messages. Leave a field blank to use its default. Customers see published changes on their next visit.</p>
+          </div>
+        </div>
+        <div class="content-language-tabs" role="group" data-i18n-aria="admin.content.languages">
+          <button type="button" class="content-language is-active" data-content-language="en" aria-pressed="true">English</button>
+          <button type="button" class="content-language" data-content-language="it" aria-pressed="false">Italiano</button>
+          <button type="button" class="content-language" data-content-language="es" aria-pressed="false">Español</button>
+        </div>
+        <form id="site-content-form" class="site-content-form">
+          <div id="site-content-fields" class="site-content-fields"></div>
+          <p id="site-content-status" class="content-status" role="status" hidden></p>
+          <button id="site-content-save" type="submit" class="btn btn-primary" data-i18n="admin.content.save">Save and publish</button>
+        </form>
       </section>
     </main>
   </section>

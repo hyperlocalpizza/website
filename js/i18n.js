@@ -133,6 +133,34 @@
       "admin.tab.slots": "Times",
       "admin.tab.inventory": "Inventory",
       "admin.tab.menu": "Menu",
+      "admin.tab.content": "Site content",
+      "admin.content.eyebrow": "Website",
+      "admin.content.title": "Site content",
+      "admin.content.description": "Edit customer-facing headings and messages. Leave a field blank to use its default. Customers see published changes on their next visit.",
+      "admin.content.languages": "Content language",
+      "admin.content.save": "Save and publish",
+      "admin.content.saved": "Site content published.",
+      "admin.content.loadError": "Unable to load site content.",
+      "admin.content.saveError": "Unable to publish changes. Try again.",
+      "admin.content.groupHero": "Hero",
+      "admin.content.groupMenu": "Menu section",
+      "admin.content.groupInfo": "How it works",
+      "admin.content.groupFooter": "Footer",
+      "admin.content.heroEyebrow": "Short introduction",
+      "admin.content.heroTitle": "Main title",
+      "admin.content.heroSub": "Supporting message",
+      "admin.content.heroCta": "Main button",
+      "admin.content.menuEyebrow": "Menu introduction",
+      "admin.content.menuTitle": "Menu heading",
+      "admin.content.infoEyebrow": "Information introduction",
+      "admin.content.infoTitle": "Information heading",
+      "admin.content.chooseTitle": "Choose heading",
+      "admin.content.chooseDesc": "Choose message",
+      "admin.content.orderTitle": "Order heading",
+      "admin.content.orderDesc": "Order message",
+      "admin.content.enjoyTitle": "Enjoy heading",
+      "admin.content.enjoyDesc": "Enjoy message",
+      "admin.content.footerTagline": "Footer tagline",
 
       // Admin — orders
       "admin.orders.eyebrow": "Orders",
@@ -329,6 +357,34 @@
       "admin.tab.slots": "Orari",
       "admin.tab.inventory": "Magazzino",
       "admin.tab.menu": "Menu",
+      "admin.tab.content": "Testi del sito",
+      "admin.content.eyebrow": "Sito web",
+      "admin.content.title": "Testi del sito",
+      "admin.content.description": "Modifica titoli e messaggi visibili ai clienti. Lascia un campo vuoto per usare il testo predefinito. I clienti vedranno le modifiche alla prossima visita.",
+      "admin.content.languages": "Lingua dei contenuti",
+      "admin.content.save": "Salva e pubblica",
+      "admin.content.saved": "Testi del sito pubblicati.",
+      "admin.content.loadError": "Impossibile caricare i testi del sito.",
+      "admin.content.saveError": "Impossibile pubblicare le modifiche. Riprova.",
+      "admin.content.groupHero": "Hero",
+      "admin.content.groupMenu": "Sezione menu",
+      "admin.content.groupInfo": "Come funziona",
+      "admin.content.groupFooter": "Piè di pagina",
+      "admin.content.heroEyebrow": "Breve introduzione",
+      "admin.content.heroTitle": "Titolo principale",
+      "admin.content.heroSub": "Messaggio di supporto",
+      "admin.content.heroCta": "Pulsante principale",
+      "admin.content.menuEyebrow": "Introduzione al menu",
+      "admin.content.menuTitle": "Titolo del menu",
+      "admin.content.infoEyebrow": "Introduzione alle informazioni",
+      "admin.content.infoTitle": "Titolo delle informazioni",
+      "admin.content.chooseTitle": "Titolo Scegli",
+      "admin.content.chooseDesc": "Testo Scegli",
+      "admin.content.orderTitle": "Titolo Ordina",
+      "admin.content.orderDesc": "Testo Ordina",
+      "admin.content.enjoyTitle": "Titolo Gusta",
+      "admin.content.enjoyDesc": "Testo Gusta",
+      "admin.content.footerTagline": "Slogan a piè di pagina",
 
       "admin.orders.eyebrow": "Comande",
       "admin.orders.title": "Ordini in coda",
@@ -520,6 +576,34 @@
       "admin.tab.slots": "Horarios",
       "admin.tab.inventory": "Inventario",
       "admin.tab.menu": "Menú",
+      "admin.tab.content": "Textos del sitio",
+      "admin.content.eyebrow": "Sitio web",
+      "admin.content.title": "Textos del sitio",
+      "admin.content.description": "Edita títulos y mensajes visibles para los clientes. Deja un campo vacío para usar el texto predeterminado. Los clientes verán los cambios en su próxima visita.",
+      "admin.content.languages": "Idioma del contenido",
+      "admin.content.save": "Guardar y publicar",
+      "admin.content.saved": "Textos del sitio publicados.",
+      "admin.content.loadError": "No se pudieron cargar los textos del sitio.",
+      "admin.content.saveError": "No se pudieron publicar los cambios. Inténtalo de nuevo.",
+      "admin.content.groupHero": "Portada",
+      "admin.content.groupMenu": "Sección del menú",
+      "admin.content.groupInfo": "Cómo funciona",
+      "admin.content.groupFooter": "Pie de página",
+      "admin.content.heroEyebrow": "Introducción breve",
+      "admin.content.heroTitle": "Título principal",
+      "admin.content.heroSub": "Mensaje de apoyo",
+      "admin.content.heroCta": "Botón principal",
+      "admin.content.menuEyebrow": "Introducción al menú",
+      "admin.content.menuTitle": "Título del menú",
+      "admin.content.infoEyebrow": "Introducción informativa",
+      "admin.content.infoTitle": "Título informativo",
+      "admin.content.chooseTitle": "Título Elige",
+      "admin.content.chooseDesc": "Texto Elige",
+      "admin.content.orderTitle": "Título Pide",
+      "admin.content.orderDesc": "Texto Pide",
+      "admin.content.enjoyTitle": "Título Disfruta",
+      "admin.content.enjoyDesc": "Texto Disfruta",
+      "admin.content.footerTagline": "Lema del pie de página",
 
       "admin.orders.eyebrow": "Pedidos",
       "admin.orders.title": "Pedidos en cola",
@@ -621,6 +705,7 @@
   // i18n engine
   // ---------------------------------------------------------------------------
   let currentLang = loadLang();
+  let contentOverrides = {};
 
   function loadLang() {
     try {
@@ -642,7 +727,7 @@
 
   /** Get a translated string, with optional {placeholder} substitution. */
   function t(key, vars) {
-    let str = translations[currentLang][key] || translations[DEFAULT_LANG][key] || key;
+    let str = contentOverrides[currentLang]?.[key] ?? translations[currentLang][key] ?? translations[DEFAULT_LANG][key] ?? key;
     if (vars) {
       Object.keys(vars).forEach((k) => {
         str = str.replace(`{${k}}`, String(vars[k]));
@@ -660,7 +745,15 @@
     });
     // For strings that contain markup (e.g. <br />), use innerHTML.
     document.querySelectorAll("[data-i18n-html]").forEach((el) => {
-      el.innerHTML = t(el.dataset.i18nHtml);
+      const key = el.dataset.i18nHtml;
+      const override = contentOverrides[currentLang]?.[key];
+      if (override !== undefined) {
+        el.textContent = override;
+        el.style.whiteSpace = "pre-line";
+      } else {
+        el.innerHTML = t(key);
+        el.style.whiteSpace = "";
+      }
     });
     document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
       el.setAttribute("placeholder", t(el.dataset.i18nPlaceholder));
@@ -694,9 +787,24 @@
     return currentLang === DEFAULT_LANG;
   }
 
+  function setContentOverrides(entries) {
+    const next = {};
+    (entries || []).forEach(({ key, language, content }) => {
+      if (!translations[language] || typeof key !== "string" || typeof content !== "string") return;
+      next[language] = next[language] || {};
+      next[language][key] = content;
+    });
+    contentOverrides = next;
+    applyToDom();
+  }
+
+  function getBaseText(key, language) {
+    return translations[language]?.[key] ?? translations[DEFAULT_LANG][key] ?? "";
+  }
+
   // Expose API.
   const VIPizza = (window.VIPizza = window.VIPizza || {});
-  VIPizza.i18n = { t, setLang, getLang, isDefault, applyToDom, FLAGS, LANG_NAMES, DEFAULT_LANG };
+  VIPizza.i18n = { t, setLang, getLang, isDefault, applyToDom, setContentOverrides, getBaseText, FLAGS, LANG_NAMES, DEFAULT_LANG };
 
   // Build the language switcher UI (shared by both pages).
   function buildSwitcher() {

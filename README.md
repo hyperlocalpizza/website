@@ -65,6 +65,17 @@ in the Supabase SQL Editor. It preserves menu items and adds the recipe table,
 stock deduction trigger, and public JPEG photo bucket. Existing items start
 without recipe amounts or photos; staff add those by editing each item.
 
+To enable the staff dashboard's multilingual Site content editor, also run
+[`migrations/20261017_site_content.sql`](migrations/20261017_site_content.sql)
+in the Supabase SQL Editor. The storefront reads the published copy on page
+load, using a local cache and built-in translations as fallbacks.
+
+To enable staff editing of public promotional text, also run
+[`migrations/20261017_site_content.sql`](migrations/20261017_site_content.sql)
+in the SQL Editor. It adds public read access to the approved content fields and
+restricts content publishing to authenticated staff. The storefront uses its
+built-in translations if Supabase is unavailable.
+
 ### Option B — Local development (Supabase CLI + Docker)
 
 1. Make sure Docker is running.

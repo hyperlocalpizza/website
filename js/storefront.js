@@ -9,6 +9,7 @@
   const i18n = window.VIPizza.i18n;
   const t = (key, vars) => i18n.t(key, vars);
   const getClient = window.VIPizza.getClient;
+  const SITE_CONTENT_CACHE_KEY = "vipizza_site_content";
 
   // ---------------------------------------------------------------------------
   // State
@@ -426,6 +427,37 @@
     }
   }
 
+  async function loadSiteContent() {
+    try {
+      const cached = JSON.parse(localStorage.getItem(SITE_CONTENT_CACHE_KEY) || "[]");
+      if (Array.isArray(cached)) i18n.setContentOverrides(cached);
+    } catch {
+      // Ignore unavailable or malformed local cache and use bundled translations.
+    }
+
+    try {
+      const client = getClient();
+      if (!client) return;
+      const { data, error } = await client
+        .from("site_content")
+        .select("content_key, language, content");
+      if (error) throw error;
+      const entries = (data || []).map(({ content_key, language, content }) => ({
+        key: content_key,
+        language,
+        content
+      }));
+      i18n.setContentOverrides(entries);
+      try {
+        localStorage.setItem(SITE_CONTENT_CACHE_KEY, JSON.stringify(entries));
+      } catch {
+        // Continue without caching if browser storage is unavailable.
+      }
+    } catch (error) {
+      console.warn("Using cached or bundled site content:", error);
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // Event wiring
   // ---------------------------------------------------------------------------
@@ -475,6 +507,7 @@
   function init() {
     wireEvents();
     renderCart();
+    loadSiteContent();
     loadMenu();
     loadSlots();
 
