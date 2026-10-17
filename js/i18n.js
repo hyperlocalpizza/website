@@ -178,6 +178,7 @@
       "admin.inv.deleteConfirm": "Delete this item?",
       "admin.inv.deleted": "Item deleted.",
       "admin.inv.loadError": "Unable to load inventory.",
+      "admin.inv.inUseError": "This ingredient is used in a menu recipe and cannot be deleted.",
 
       // Admin — menu
       "admin.menu.eyebrow": "Menu",
@@ -220,7 +221,17 @@
       "admin.editor.menu.category": "Category",
       "admin.editor.menu.desc": "Description",
       "admin.editor.menu.price": "Price (€)",
-      "admin.editor.menu.available": "Available"
+      "admin.editor.menu.available": "Available",
+      "admin.editor.menu.ingredients": "Recipe ingredients",
+      "admin.editor.menu.addIngredient": "Add ingredient",
+      "admin.editor.menu.ingredient": "Ingredient",
+      "admin.editor.menu.chooseIngredient": "Choose ingredient",
+      "admin.editor.menu.ingredientQuantity": "Amount per pizza",
+      "admin.editor.menu.removeIngredient": "Remove ingredient",
+      "admin.editor.menu.ingredientError": "Choose each ingredient once and enter an amount greater than zero.",
+      "admin.editor.menu.photo": "JPEG photo",
+      "admin.editor.menu.photoHint": "JPEG only, up to 5 MB.",
+      "admin.editor.menu.photoError": "Choose a JPEG photo up to 5 MB."
     },
 
     it: {
@@ -360,6 +371,7 @@
       "admin.inv.deleteConfirm": "Eliminare questo articolo?",
       "admin.inv.deleted": "Articolo eliminato.",
       "admin.inv.loadError": "Impossibile caricare l'inventario.",
+      "admin.inv.inUseError": "Questo ingrediente è usato in una ricetta e non può essere eliminato.",
 
       "admin.menu.eyebrow": "Menu",
       "admin.menu.title": "Gestione menu",
@@ -400,7 +412,17 @@
       "admin.editor.menu.category": "Categoria",
       "admin.editor.menu.desc": "Descrizione",
       "admin.editor.menu.price": "Prezzo (€)",
-      "admin.editor.menu.available": "Disponibile"
+      "admin.editor.menu.available": "Disponibile",
+      "admin.editor.menu.ingredients": "Ingredienti per pizza",
+      "admin.editor.menu.addIngredient": "Aggiungi ingrediente",
+      "admin.editor.menu.ingredient": "Ingrediente",
+      "admin.editor.menu.chooseIngredient": "Scegli ingrediente",
+      "admin.editor.menu.ingredientQuantity": "Quantità per pizza",
+      "admin.editor.menu.removeIngredient": "Rimuovi ingrediente",
+      "admin.editor.menu.ingredientError": "Scegli ogni ingrediente una sola volta e inserisci una quantità maggiore di zero.",
+      "admin.editor.menu.photo": "Foto JPEG",
+      "admin.editor.menu.photoHint": "Solo JPEG, massimo 5 MB.",
+      "admin.editor.menu.photoError": "Scegli una foto JPEG fino a 5 MB."
     },
 
     es: {
@@ -540,6 +562,7 @@
       "admin.inv.deleteConfirm": "¿Eliminar este artículo?",
       "admin.inv.deleted": "Artículo eliminado.",
       "admin.inv.loadError": "No se pudo cargar el inventario.",
+      "admin.inv.inUseError": "Este ingrediente se usa en una receta y no se puede eliminar.",
 
       "admin.menu.eyebrow": "Menú",
       "admin.menu.title": "Gestión del menú",
@@ -580,7 +603,17 @@
       "admin.editor.menu.category": "Categoría",
       "admin.editor.menu.desc": "Descripción",
       "admin.editor.menu.price": "Precio (€)",
-      "admin.editor.menu.available": "Disponible"
+      "admin.editor.menu.available": "Disponible",
+      "admin.editor.menu.ingredients": "Ingredientes por pizza",
+      "admin.editor.menu.addIngredient": "Añadir ingrediente",
+      "admin.editor.menu.ingredient": "Ingrediente",
+      "admin.editor.menu.chooseIngredient": "Elegir ingrediente",
+      "admin.editor.menu.ingredientQuantity": "Cantidad por pizza",
+      "admin.editor.menu.removeIngredient": "Quitar ingrediente",
+      "admin.editor.menu.ingredientError": "Elige cada ingrediente una sola vez e indica una cantidad mayor que cero.",
+      "admin.editor.menu.photo": "Foto JPEG",
+      "admin.editor.menu.photoHint": "Solo JPEG, hasta 5 MB.",
+      "admin.editor.menu.photoError": "Elige una foto JPEG de hasta 5 MB."
     }
   };
 

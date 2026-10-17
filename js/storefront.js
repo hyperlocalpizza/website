@@ -113,6 +113,7 @@
             .map(
               (item) => `
             <article class="menu-card">
+              ${item.image_url ? `<img class="menu-card-photo" src="${escapeHtml(item.image_url)}" alt="${escapeHtml(item.name)}" loading="lazy" />` : ""}
               <div class="menu-card-body">
                 <div class="menu-card-head">
                   <h4 class="menu-card-name">${escapeHtml(item.name)}</h4>
@@ -405,7 +406,7 @@
             .order("sort_order"),
           getClient()
             .from("menu_items")
-            .select("id, category_id, name, description, price")
+            .select("id, category_id, name, description, price, image_url")
             .eq("is_available", true)
             .order("name")
         ]);

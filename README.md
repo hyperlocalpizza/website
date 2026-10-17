@@ -58,6 +58,13 @@ in the admin dashboard (both on the login screen and the header).
    `alter publication supabase_realtime add table public.orders;` and the
    equivalent for `slots` and `inventory`).
 
+For an existing project that already has the original schema, do not rerun the
+seed script just to add recipe support. Run
+[`migrations/20261017_recipe_aware_menu_items.sql`](migrations/20261017_recipe_aware_menu_items.sql)
+in the Supabase SQL Editor. It preserves menu items and adds the recipe table,
+stock deduction trigger, and public JPEG photo bucket. Existing items start
+without recipe amounts or photos; staff add those by editing each item.
+
 ### Option B — Local development (Supabase CLI + Docker)
 
 1. Make sure Docker is running.

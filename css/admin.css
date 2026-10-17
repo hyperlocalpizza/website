@@ -557,6 +557,20 @@
   color: #b9aaa0;
 }
 
+.admin-menu-photo {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.menu-item-ingredients {
+  color: #d5c7ba;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .menu-item-meta {
   display: flex;
   gap: 8px;
@@ -628,6 +642,72 @@
   resize: vertical;
 }
 
+.recipe-field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.recipe-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+}
+
+.ingredient-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ingredient-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(82px, 0.45fr) 34px 36px;
+  align-items: center;
+  gap: 8px;
+}
+
+.ingredient-row select,
+.ingredient-row input {
+  width: 100%;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.ingredient-unit {
+  color: var(--muted);
+  font-family: var(--font-sans);
+  font-size: 12px;
+}
+
+.ingredient-remove {
+  width: 32px;
+  height: 32px;
+}
+
+.photo-field input[type="file"] {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+}
+
+.photo-preview {
+  width: min(100%, 360px);
+  max-height: 200px;
+  margin-top: 10px;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
 /* --- Responsive additions ------------------------------------------------- */
 @media (max-width: 640px) {
   .slot-actions,
@@ -635,5 +715,10 @@
   .menu-actions {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .ingredient-row {
+    grid-template-columns: minmax(0, 1fr) 84px 30px 34px;
+    gap: 5px;
   }
 }

@@ -389,7 +389,7 @@
       toast(t("admin.inv.deleted"), "success");
     } catch (err) {
       console.error("Failed to delete inventory:", err);
-      toast(t("admin.inv.loadError"), "error");
+      toast(err.code === "23503" ? t("admin.inv.inUseError") : t("admin.inv.loadError"), "error");
     }
   }
 
@@ -404,13 +404,18 @@
     els.menuFeed.innerHTML = menuItems
       .map((item) => {
         const cat = categories.find((c) => c.id === item.category_id);
+        const ingredients = (item.ingredients || [])
+          .map((line) => `${escapeHtml(line.inventory?.name || "")} · ${line.quantity} ${escapeHtml(line.inventory?.unit || "")}`)
+          .join(", ");
         return `
         <article class="menu-card" data-id="${item.id}">
+          ${item.image_url ? `<img class="admin-menu-photo" src="${escapeHtml(item.image_url)}" alt="${escapeHtml(item.name)}" loading="lazy" />` : ""}
           <div class="menu-card-head">
             <span class="menu-item-name">${escapeHtml(item.name)}</span>
             <span class="menu-item-price">${formatPrice(item.price)}</span>
           </div>
           <p class="menu-item-desc">${escapeHtml(item.description || "")}</p>
+          ${ingredients ? `<p class="menu-item-ingredients">${ingredients}</p>` : ""}
           <p class="menu-item-meta">
             ${cat ? `<span class="menu-item-cat">${escapeHtml(cat.name)}</span>` : ""}
             <span class="menu-item-avail ${item.is_available ? "is-on" : "is-off"}">${item.is_available ? t("admin.menu.available") : t("admin.menu.unavailable")}</span>
@@ -428,15 +433,20 @@
 
   async function loadMenu() {
     try {
-      const [{ data: cats, error: catError }, { data: items, error: itemError }] =
+      const [{ data: cats, error: catError }, { data: items, error: itemError }, { data: recipes, error: recipeError }] =
         await Promise.all([
           getClient().from("categories").select("*").order("sort_order"),
-          getClient().from("menu_items").select("*").order("name")
+          getClient().from("menu_items").select("*").order("name"),
+          getClient().from("menu_item_ingredients").select("menu_item_id, quantity, inventory(name, unit)")
         ]);
       if (catError) throw catError;
       if (itemError) throw itemError;
+      if (recipeError) throw recipeError;
       categories = cats || [];
-      menuItems = items || [];
+      menuItems = (items || []).map((item) => ({
+        ...item,
+        ingredients: (recipes || []).filter((line) => line.menu_item_id === item.id)
+      }));
       renderMenu();
     } catch (err) {
       console.error("Failed to load menu:", err);
@@ -463,11 +473,13 @@
 
   async function deleteMenuItem(id) {
     if (!confirm(t("admin.menu.deleteConfirm"))) return;
+    const item = menuItems.find((entry) => entry.id === id);
     try {
       const { error } = await getClient().from("menu_items").delete().eq("id", id);
       if (error) throw error;
       menuItems = menuItems.filter((i) => i.id !== id);
       renderMenu();
+      if (item && item.image_url) await deleteMenuPhoto(item.image_url);
       toast(t("admin.menu.deleted"), "success");
     } catch (err) {
       console.error("Failed to delete menu item:", err);
@@ -475,10 +487,73 @@
     }
   }
 
+  function menuPhotoObjectPath(imageUrl) {
+    try {
+      const marker = "/storage/v1/object/public/menu-photos/";
+      const pathname = new URL(imageUrl).pathname;
+      const markerIndex = pathname.indexOf(marker);
+      return markerIndex === -1 ? null : decodeURIComponent(pathname.slice(markerIndex + marker.length));
+    } catch {
+      return null;
+    }
+  }
+
+  async function deleteMenuPhoto(imageUrl) {
+    const objectPath = menuPhotoObjectPath(imageUrl);
+    if (!objectPath) return;
+    try {
+      const { error } = await getClient().storage.from("menu-photos").remove([objectPath]);
+      if (error) console.warn("Unable to remove old menu photo:", error);
+    } catch (error) {
+      console.warn("Unable to remove old menu photo:", error);
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // Editor modal (add / edit for slots, inventory, menu)
   // ---------------------------------------------------------------------------
-  function openEditor(kind, id) {
+  function addIngredientRow(container, ingredient = {}) {
+    const row = document.createElement("div");
+    row.className = "ingredient-row";
+
+    const select = document.createElement("select");
+    select.className = "ingredient-select";
+    select.setAttribute("aria-label", t("admin.editor.menu.ingredient"));
+    const blankOption = document.createElement("option");
+    blankOption.value = "";
+    blankOption.textContent = t("admin.editor.menu.chooseIngredient");
+    select.appendChild(blankOption);
+    inventory.forEach((stockItem) => {
+      const option = document.createElement("option");
+      option.value = stockItem.id;
+      option.textContent = `${stockItem.name} (${stockItem.unit})`;
+      option.selected = stockItem.id === ingredient.inventory_id;
+      select.appendChild(option);
+    });
+
+    const quantity = document.createElement("input");
+    quantity.className = "ingredient-quantity";
+    quantity.type = "number";
+    quantity.min = "0.001";
+    quantity.step = "0.001";
+    quantity.value = ingredient.quantity ?? "";
+    quantity.setAttribute("aria-label", t("admin.editor.menu.ingredientQuantity"));
+
+    const unit = document.createElement("span");
+    unit.className = "ingredient-unit";
+    unit.textContent = inventory.find((stockItem) => stockItem.id === select.value)?.unit || "";
+
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "icon-btn ingredient-remove";
+    remove.textContent = "×";
+    remove.setAttribute("aria-label", t("admin.editor.menu.removeIngredient"));
+
+    row.append(select, quantity, unit, remove);
+    container.appendChild(row);
+  }
+
+  async function openEditor(kind, id) {
     editorContext = { kind, id };
     els.editorError.hidden = true;
     els.editorFields.innerHTML = "";
@@ -504,12 +579,25 @@
           <option value="l" ${item && item.unit === "l" ? "selected" : ""}>l</option>
           <option value="ml" ${item && item.unit === "ml" ? "selected" : ""}>ml</option>
         </select></label>
-        <label class="field"><span>${t("admin.editor.inv.qty")}</span><input type="number" id="f-qty" min="0" step="0.01" value="${item ? item.quantity : 0}" required /></label>
-        <label class="field"><span>${t("admin.editor.inv.threshold")}</span><input type="number" id="f-threshold" min="0" step="0.01" value="${item ? item.low_threshold : 0}" required /></label>
+        <label class="field"><span>${t("admin.editor.inv.qty")}</span><input type="number" id="f-qty" min="0" step="0.001" value="${item ? item.quantity : 0}" required /></label>
+        <label class="field"><span>${t("admin.editor.inv.threshold")}</span><input type="number" id="f-threshold" min="0" step="0.001" value="${item ? item.low_threshold : 0}" required /></label>
       `;
     } else if (kind === "menu") {
       const item = id ? menuItems.find((i) => i.id === id) : null;
       els.editorTitle.textContent = item ? t("admin.editor.menu.edit") : t("admin.editor.menu.new");
+      let recipe = [];
+      if (item) {
+        const { data, error } = await getClient()
+          .from("menu_item_ingredients")
+          .select("inventory_id, quantity")
+          .eq("menu_item_id", item.id);
+        if (error) {
+          console.error("Failed to load menu recipe:", error);
+          toast(t("admin.menu.loadError"), "error");
+          return;
+        }
+        recipe = data || [];
+      }
       const catOptions = categories
         .map((c) => `<option value="${c.id}" ${item && item.category_id === c.id ? "selected" : ""}>${escapeHtml(c.name)}</option>`)
         .join("");
@@ -518,8 +606,20 @@
         <label class="field"><span>${t("admin.editor.menu.category")}</span><select id="f-category"><option value="">—</option>${catOptions}</select></label>
         <label class="field"><span>${t("admin.editor.menu.desc")}</span><textarea id="f-desc" rows="2">${item ? escapeHtml(item.description || "") : ""}</textarea></label>
         <label class="field"><span>${t("admin.editor.menu.price")}</span><input type="number" id="f-price" min="0" step="0.01" value="${item ? item.price : ""}" required /></label>
+        <section class="recipe-field">
+          <div class="recipe-head"><strong>${t("admin.editor.menu.ingredients")}</strong><button type="button" id="ingredient-add" class="btn btn-outline btn-sm">${t("admin.editor.menu.addIngredient")}</button></div>
+          <div id="ingredient-rows" class="ingredient-rows"></div>
+        </section>
+        <div class="field photo-field">
+          <span>${t("admin.editor.menu.photo")}</span>
+          <input type="file" id="f-photo" accept="image/jpeg,.jpg,.jpeg" />
+          <small class="field-hint">${t("admin.editor.menu.photoHint")}</small>
+          <img id="f-photo-preview" class="photo-preview" src="${item && item.image_url ? escapeHtml(item.image_url) : ""}" alt="${escapeHtml(item ? item.name : "")}" ${item && item.image_url ? "" : "hidden"} />
+        </div>
         <label class="field"><span>${t("admin.editor.menu.available")}</span><select id="f-available"><option value="true" ${!item || item.is_available ? "selected" : ""}>${t("admin.editor.slot.yes")}</option><option value="false" ${item && !item.is_available ? "selected" : ""}>${t("admin.editor.slot.no")}</option></select></label>
       `;
+      const rows = els.editorFields.querySelector("#ingredient-rows");
+      (recipe.length ? recipe : [{}]).forEach((line) => addIngredientRow(rows, line));
     }
 
     els.editorModal.hidden = false;
@@ -575,27 +675,69 @@
         }
         await loadInventory();
       } else if (kind === "menu") {
-        const payload = {
-          name: els.editorFields.querySelector("#f-name").value.trim(),
-          category_id: els.editorFields.querySelector("#f-category").value || null,
-          description: els.editorFields.querySelector("#f-desc").value.trim() || null,
-          price: Number(els.editorFields.querySelector("#f-price").value),
-          is_available: els.editorFields.querySelector("#f-available").value === "true"
-        };
-        if (id) {
-          const { error } = await getClient().from("menu_items").update(payload).eq("id", id);
-          if (error) throw error;
-        } else {
-          const { error } = await getClient().from("menu_items").insert(payload);
-          if (error) throw error;
+        const photoInput = els.editorFields.querySelector("#f-photo");
+        const photoFile = photoInput.files[0];
+        if (photoFile && (photoFile.type !== "image/jpeg" || photoFile.size > 5 * 1024 * 1024)) {
+          throw new Error("invalid_photo");
         }
+
+        const ingredients = [];
+        const usedIngredients = new Set();
+        els.editorFields.querySelectorAll(".ingredient-row").forEach((row) => {
+          const inventoryId = row.querySelector(".ingredient-select").value;
+          const quantityValue = row.querySelector(".ingredient-quantity").value;
+          if (!inventoryId && !quantityValue) return;
+          const quantity = Number(quantityValue);
+          if (!inventoryId || !Number.isFinite(quantity) || quantity <= 0 || usedIngredients.has(inventoryId)) {
+            throw new Error("invalid_ingredients");
+          }
+          usedIngredients.add(inventoryId);
+          ingredients.push({ inventory_id: inventoryId, quantity });
+        });
+
+        const name = els.editorFields.querySelector("#f-name").value.trim();
+        const price = Number(els.editorFields.querySelector("#f-price").value);
+        if (!name || !Number.isFinite(price) || price < 0) throw new Error("invalid_menu_item");
+
+        const item = id ? menuItems.find((entry) => entry.id === id) : null;
+        let photoPath = null;
+        let imageUrl = item?.image_url || null;
+        if (photoFile) {
+          photoPath = `${crypto.randomUUID()}.jpg`;
+          const { error: uploadError } = await getClient()
+            .storage.from("menu-photos")
+            .upload(photoPath, photoFile, { contentType: "image/jpeg", upsert: false });
+          if (uploadError) throw uploadError;
+          imageUrl = getClient().storage.from("menu-photos").getPublicUrl(photoPath).data.publicUrl;
+        }
+
+        const { error } = await getClient().rpc("save_menu_item", {
+          p_item_id: id || null,
+          p_name: name,
+          p_category_id: els.editorFields.querySelector("#f-category").value || null,
+          p_description: els.editorFields.querySelector("#f-desc").value.trim() || null,
+          p_price: price,
+          p_is_available: els.editorFields.querySelector("#f-available").value === "true",
+          p_image_url: imageUrl,
+          p_ingredients: ingredients
+        });
+        if (error) {
+          if (photoPath) await getClient().storage.from("menu-photos").remove([photoPath]);
+          throw error;
+        }
+        if (photoFile && item?.image_url) await deleteMenuPhoto(item.image_url);
         await loadMenu();
       }
       closeEditor();
       toast(t("admin.editor.saved"), "success");
     } catch (err) {
       console.error("Editor save failed:", err);
-      showEditorError(t("admin.editor.error"));
+      const message = err.message === "invalid_photo"
+        ? t("admin.editor.menu.photoError")
+        : err.message === "invalid_ingredients"
+          ? t("admin.editor.menu.ingredientError")
+          : t("admin.editor.error");
+      showEditorError(message);
     }
   }
 
@@ -737,6 +879,27 @@
 
     // Editor modal
     els.editorForm.addEventListener("submit", handleEditorSubmit);
+    els.editorFields.addEventListener("click", (event) => {
+      if (event.target.closest("#ingredient-add")) {
+        addIngredientRow(els.editorFields.querySelector("#ingredient-rows"));
+      } else if (event.target.closest(".ingredient-remove")) {
+        event.target.closest(".ingredient-row").remove();
+      }
+    });
+    els.editorFields.addEventListener("change", (event) => {
+      if (event.target.matches(".ingredient-select")) {
+        const row = event.target.closest(".ingredient-row");
+        row.querySelector(".ingredient-unit").textContent =
+          inventory.find((stockItem) => stockItem.id === event.target.value)?.unit || "";
+      } else if (event.target.matches("#f-photo")) {
+        const preview = els.editorFields.querySelector("#f-photo-preview");
+        const file = event.target.files[0];
+        if (file && file.type === "image/jpeg" && file.size <= 5 * 1024 * 1024) {
+          preview.src = URL.createObjectURL(file);
+          preview.hidden = false;
+        }
+      }
+    });
     document.querySelectorAll("[data-close-modal]").forEach((el) => {
       el.addEventListener("click", closeEditor);
     });
