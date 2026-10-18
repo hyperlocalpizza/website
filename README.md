@@ -78,6 +78,12 @@ in the SQL Editor. It adds public read access to the approved content fields and
 restricts content publishing to authenticated staff. The storefront uses its
 built-in translations if Supabase is unavailable.
 
+For checkout to reserve preparation capacity and create orders without
+exposing order records to public reads, run
+[`migrations/20261017_submit_order_atomically.sql`](migrations/20261017_submit_order_atomically.sql)
+in the Supabase SQL Editor. It atomically reserves slot capacity, creates the
+order and its items, and returns only the tracking code.
+
 ### Option B — Local development (Supabase CLI + Docker)
 
 1. Make sure Docker is running.
@@ -192,7 +198,8 @@ jobs:
 ### Storefront (`index.html`)
 - Fetches `categories` and `menu_items` from Supabase (public RLS allows reads).
 - Cart state is kept in `localStorage` (quantities, totals).
-- At checkout, customers pick a **pickup slot** (or delivery address).
+- At checkout, customers select a required **preparation time** for every
+  order, whether pickup or delivery.
 - Delivery uses separate street, optional apartment/floor, city, state/region,
   postal code, and country fields. Geoapify suggestions start after three
   characters and are not restricted to a country or service area. Manual entry
@@ -209,7 +216,7 @@ Four tabs, all behind **Supabase Auth** (email/password):
 1. **Ordini (Orders)** — realtime feed of new orders (chime + toast), with
    single-click status advancement:
    `pending → preparing → in_oven → out_for_delivery → completed` (or cancel).
-2. **Orari (Slots)** — manage pickup time slots: add, edit, toggle active,
+2. **Orari (Slots)** — manage preparation time slots: add, edit, toggle active,
    delete, and see live capacity (reserved / max pizzas).
 3. **Magazzino (Inventory)** — track stock levels with low-stock warnings.
    Stock is decremented automatically when orders are placed (DB trigger).

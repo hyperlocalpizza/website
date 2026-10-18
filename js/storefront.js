@@ -45,7 +45,6 @@
     checkoutModal: document.getElementById("checkout-modal"),
     checkoutForm: document.getElementById("checkout-form"),
     checkoutError: document.getElementById("checkout-error"),
-    slotField: document.getElementById("slot-field"),
     slotSelect: document.getElementById("slot-select"),
     slotHint: document.getElementById("slot-hint"),
     addressField: document.getElementById("address-field"),
@@ -451,7 +450,6 @@
   function updateDeliveryFields() {
     const isDelivery = els.checkoutForm.delivery_type.value === "delivery";
     els.addressField.hidden = !isDelivery;
-    els.slotField.hidden = isDelivery;
     if (!isDelivery) {
       clearTimeout(addressSearchTimer);
       addressSearchId += 1;
@@ -487,7 +485,7 @@
       showCheckoutError(t("checkout.err.address"));
       return;
     }
-    if (deliveryType === "pickup" && !slotId) {
+    if (!slotId) {
       showCheckoutError(t("checkout.err.slot"));
       return;
     }
@@ -497,7 +495,6 @@
     submitBtn.textContent = t("checkout.submitting");
 
     try {
-      const total = cartTotal();
       const address = deliveryType === "delivery"
         ? [
             addressFieldsValue.street,
@@ -508,46 +505,30 @@
           ].filter(Boolean).join(", ")
         : null;
 
-      // Reserve slot capacity first (pickup only).
-      if (deliveryType === "pickup") {
-        const { data: reserved, error: reserveError } = await getClient().rpc(
-          "check_and_reserve_slot",
-          { p_slot_id: slotId, p_requested_quantity: cartCount() }
-        );
-        if (reserveError) throw reserveError;
-        if (reserved !== true) {
-          showCheckoutError(t("checkout.err.slotFull"));
-          await loadSlots();
-          return;
-        }
-      }
-
-      const { data: order, error: orderError } = await getClient()
-        .from("orders")
-        .insert({
-          customer_name: name,
-          phone,
-          delivery_type: deliveryType,
-          address: deliveryType === "delivery" ? address : null,
-          notes: notes || null,
-          slot_id: deliveryType === "pickup" ? slotId : null,
-          total_amount: total
-        })
-        .select("id, tracking_id")
-        .single();
-
+      const { data: order, error: orderError } = await getClient().rpc("submit_order", {
+        p_customer_name: name,
+        p_phone: phone,
+        p_delivery_type: deliveryType,
+        p_address: address,
+        p_notes: notes || null,
+        p_slot_id: slotId,
+        p_items: items.map((item) => ({
+          menu_item_id: item.id,
+          quantity: item.quantity
+        }))
+      });
       if (orderError) throw orderError;
-
-      const orderItems = items.map((item) => ({
-        order_id: order.id,
-        menu_item_id: item.id,
-        item_name: item.name,
-        unit_price: item.price,
-        quantity: item.quantity
-      }));
-
-      const { error: itemsError } = await getClient().from("order_items").insert(orderItems);
-      if (itemsError) throw itemsError;
+      if (order?.error === "slot_full") {
+        showCheckoutError(t("checkout.err.slotFull"));
+        await loadSlots();
+        return;
+      }
+      if (order?.error) {
+        throw new Error(`Order submission failed: ${order.error}`);
+      }
+      if (typeof order?.tracking_id !== "string") {
+        throw new Error("Order submission returned no tracking ID");
+      }
 
       // Success: clear cart and show confirmation.
       cart = {};
@@ -557,7 +538,8 @@
       showConfirmation(order.tracking_id);
     } catch (err) {
       console.error("Checkout failed:", err);
-      showCheckoutError(t("checkout.err.generic"));
+      const needsMigration = ["PGRST202", "42883"].includes(err.code);
+      showCheckoutError(t(needsMigration ? "checkout.err.setup" : "checkout.err.generic"));
     } finally {
       submitBtn.disabled = false;
       submitBtn.textContent = t("checkout.submit");
