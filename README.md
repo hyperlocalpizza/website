@@ -69,6 +69,8 @@ To enable the staff dashboard's multilingual Site content editor, also run
 [`migrations/20261017_site_content.sql`](migrations/20261017_site_content.sql)
 in the Supabase SQL Editor. The storefront reads the published copy on page
 load, using a local cache and built-in translations as fallbacks.
+If you already ran this migration before the partial-save fix, run the updated
+migration again so Supabase replaces the old save function.
 
 To enable staff editing of public promotional text, also run
 [`migrations/20261017_site_content.sql`](migrations/20261017_site_content.sql)
