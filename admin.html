@@ -61,6 +61,7 @@
       <button class="tab" data-tab="inventory" data-i18n="admin.tab.inventory">Inventory</button>
       <button class="tab" data-tab="menu" data-i18n="admin.tab.menu">Menu</button>
       <button class="tab" data-tab="content" data-i18n="admin.tab.content">Site content</button>
+      <button class="tab" data-tab="analytics" data-i18n="admin.tab.analytics">Analytics</button>
     </nav>
 
     <main class="container dashboard-main">
@@ -104,6 +105,10 @@
           </div>
           <button id="inventory-add-btn" class="btn btn-primary btn-sm" data-i18n="admin.inv.add">+ New item</button>
         </div>
+        <div class="inventory-summary">
+          <span data-i18n="admin.inv.stockValue">Current stock value</span>
+          <strong id="inventory-total">$0.00</strong>
+        </div>
         <div id="inventory-feed" class="inventory-feed">
           <p class="empty-state" data-i18n="admin.inv.empty">No items in stock.</p>
         </div>
@@ -141,6 +146,39 @@
           <p id="site-content-status" class="content-status" role="status" hidden></p>
           <button id="site-content-save" type="submit" class="btn btn-primary" data-i18n="admin.content.save">Save and publish</button>
         </form>
+      </section>
+
+      <section id="view-analytics" class="view">
+        <div class="dashboard-head">
+          <div>
+            <p class="eyebrow" data-i18n="admin.analytics.eyebrow">Business</p>
+            <h1 class="dashboard-title" data-i18n="admin.analytics.title">Weekly sales</h1>
+            <p id="analytics-period" class="analytics-period"></p>
+          </div>
+          <button id="analytics-refresh" type="button" class="btn btn-outline btn-sm" data-i18n="admin.analytics.refresh">Refresh</button>
+        </div>
+        <div class="analytics-legend" role="group" data-i18n-aria="admin.analytics.legend">
+          <span><i class="analytics-swatch is-cost"></i><span data-i18n="admin.analytics.cost">Ingredient cost</span></span>
+          <span><i class="analytics-swatch is-gain"></i><span data-i18n="admin.analytics.gain">Gain</span></span>
+          <span><i class="analytics-swatch is-pizzas"></i><span data-i18n="admin.analytics.pizzas">Pizzas sold</span></span>
+        </div>
+        <div id="analytics-status" class="analytics-status" role="status" hidden></div>
+        <div class="analytics-chart-wrap">
+          <canvas id="weekly-sales-chart" role="img" data-i18n-aria="admin.analytics.chartAria"></canvas>
+        </div>
+        <p class="analytics-note" data-i18n="admin.analytics.countNote">Counts include all non-canceled orders.</p>
+        <p class="analytics-note" data-i18n="admin.analytics.estimateNote">Orders placed before cost snapshots were enabled use current menu costs and gains as estimates.</p>
+        <div class="analytics-table-wrap">
+          <table class="analytics-table">
+            <thead><tr>
+              <th scope="col" data-i18n="admin.analytics.week">Week</th>
+              <th scope="col" data-i18n="admin.analytics.cost">Ingredient cost</th>
+              <th scope="col" data-i18n="admin.analytics.gain">Gain</th>
+              <th scope="col" data-i18n="admin.analytics.pizzas">Pizzas sold</th>
+            </tr></thead>
+            <tbody id="analytics-table-body"></tbody>
+          </table>
+        </div>
       </section>
     </main>
   </section>

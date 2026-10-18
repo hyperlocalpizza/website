@@ -463,6 +463,24 @@
   gap: 20px;
 }
 
+.inventory-summary {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 0 20px;
+  padding: 14px 0;
+  border-top: 1px solid #514941;
+  border-bottom: 1px solid #514941;
+  color: #d5c7ba;
+  font-family: var(--font-sans);
+}
+
+.inventory-summary strong {
+  color: #8fca7a;
+  font-size: 20px;
+}
+
 .inventory-card {
   background: #302b27;
   border: 1px solid #514941;
@@ -523,6 +541,13 @@
   color: #b9aaa0;
 }
 
+.inventory-cost,
+.inventory-value {
+  color: #d5c7ba;
+  font-family: var(--font-sans);
+  font-size: 13px;
+}
+
 .inventory-actions {
   display: flex;
   gap: 8px;
@@ -563,6 +588,12 @@
   font-family: var(--font-sans);
   font-weight: 700;
   color: #e0a458;
+}
+
+.menu-item-cost {
+  color: #8fca7a;
+  font-family: var(--font-sans);
+  font-size: 12px;
 }
 
 .menu-item-desc {
@@ -710,6 +741,114 @@
 }
 
 /* ============================================================================
+   Weekly analytics
+   ============================================================================ */
+.analytics-period,
+.analytics-note {
+  color: #b9aaa0;
+  font-family: var(--font-sans);
+  font-size: 13px;
+}
+
+.analytics-period {
+  margin-top: 8px;
+}
+
+.analytics-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  margin-bottom: 12px;
+  color: #d5c7ba;
+  font-family: var(--font-sans);
+  font-size: 13px;
+}
+
+.analytics-legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.analytics-swatch {
+  width: 11px;
+  height: 11px;
+  flex: 0 0 11px;
+  border-radius: 2px;
+}
+
+.analytics-swatch.is-cost {
+  background: #e0a458;
+}
+
+.analytics-swatch.is-gain {
+  background: #8fca7a;
+}
+
+.analytics-swatch.is-pizzas {
+  background: #75b8d1;
+}
+
+.analytics-status {
+  margin: 12px 0;
+  color: #ed7658;
+  font-family: var(--font-sans);
+  font-size: 14px;
+}
+
+.analytics-chart-wrap {
+  overflow-x: auto;
+  border: 1px solid #514941;
+  border-radius: 6px;
+  background: #302b27;
+}
+
+.analytics-chart-wrap canvas {
+  display: block;
+  width: 100%;
+  min-width: 720px;
+  height: 340px;
+}
+
+.analytics-note {
+  margin: 10px 0 22px;
+}
+
+.analytics-table-wrap {
+  overflow-x: auto;
+}
+
+.analytics-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #fffaf3;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  text-align: right;
+}
+
+.analytics-table th,
+.analytics-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #514941;
+  white-space: nowrap;
+}
+
+.analytics-table thead th {
+  color: #b9aaa0;
+  font-weight: 600;
+}
+
+.analytics-table th:first-child,
+.analytics-table tbody th {
+  text-align: left;
+}
+
+.analytics-table tbody th {
+  font-weight: 600;
+}
+
+/* ============================================================================
    Editor modal
    ============================================================================ */
 .editor-fields {
@@ -738,6 +877,58 @@
 
 .editor-fields .field textarea {
   resize: vertical;
+}
+
+.menu-price-breakdown {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 16px;
+  padding: 14px;
+  border: 1px solid #514941;
+  border-radius: 6px;
+  background: #302b27;
+  font-family: var(--font-sans);
+}
+
+.menu-price-breakdown > p {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: #b9aaa0;
+  font-size: 13px;
+}
+
+.menu-price-breakdown > p strong {
+  color: #fffaf3;
+  font-size: 17px;
+}
+
+.menu-price-breakdown .field {
+  margin: 0;
+}
+
+.menu-price-breakdown .field > span {
+  margin-bottom: 4px;
+}
+
+.menu-price-breakdown .field input {
+  width: 100%;
+  padding: 9px 10px;
+  border: 1px solid #514941;
+  border-radius: 6px;
+  background: #25221f;
+  color: #fffaf3;
+}
+
+.menu-price-breakdown .menu-final-price {
+  grid-column: 1 / -1;
+  padding-top: 10px;
+  border-top: 1px solid #514941;
+}
+
+.menu-price-breakdown .menu-final-price strong {
+  color: #e0a458;
+  font-size: 21px;
 }
 
 .recipe-field {

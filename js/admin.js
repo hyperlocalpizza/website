@@ -74,6 +74,7 @@
     slotsFeed: document.getElementById("slots-feed"),
     slotAddBtn: document.getElementById("slot-add-btn"),
     inventoryFeed: document.getElementById("inventory-feed"),
+    inventoryTotal: document.getElementById("inventory-total"),
     inventoryAddBtn: document.getElementById("inventory-add-btn"),
     menuFeed: document.getElementById("menu-feed"),
     menuAddBtn: document.getElementById("menu-add-btn"),
@@ -81,6 +82,11 @@
     siteContentFields: document.getElementById("site-content-fields"),
     siteContentStatus: document.getElementById("site-content-status"),
     siteContentSave: document.getElementById("site-content-save"),
+    analyticsPeriod: document.getElementById("analytics-period"),
+    analyticsRefresh: document.getElementById("analytics-refresh"),
+    analyticsStatus: document.getElementById("analytics-status"),
+    analyticsChart: document.getElementById("weekly-sales-chart"),
+    analyticsTableBody: document.getElementById("analytics-table-body"),
     editorModal: document.getElementById("editor-modal"),
     editorTitle: document.getElementById("editor-title"),
     editorForm: document.getElementById("editor-form"),
@@ -98,6 +104,7 @@
   let editorContext = null; // { kind, id }
   let contentLanguage = "en";
   let siteContentDrafts = { en: {}, it: {}, es: {} };
+  let weeklyAnalytics = [];
 
   // ---------------------------------------------------------------------------
   // Auth
@@ -162,7 +169,7 @@
     if (user) {
       els.userEmail.textContent = user.email || "";
       showDashboard();
-      await Promise.all([loadOrders(), loadSlots(), loadInventory(), loadMenu(), loadSiteContent()]);
+      await Promise.all([loadOrders(), loadSlots(), loadInventory(), loadMenu(), loadSiteContent(), loadWeeklyAnalytics()]);
       setupRealtime();
     }
   }
@@ -177,6 +184,7 @@
     document.querySelectorAll(".view").forEach((view) => {
       view.classList.toggle("is-active", view.id === `view-${tabName}`);
     });
+    if (tabName === "analytics") renderWeeklyAnalyticsChart();
   }
 
   // ---------------------------------------------------------------------------
@@ -295,6 +303,155 @@
     }
   }
 
+  function utcWeekStart(date) {
+    const week = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+    week.setUTCDate(week.getUTCDate() - ((week.getUTCDay() + 6) % 7));
+    return week;
+  }
+
+  function formatAnalyticsWeek(date) {
+    return date.toLocaleDateString(i18n.getLang(), { month: "short", day: "numeric", timeZone: "UTC" });
+  }
+
+  function renderWeeklyAnalyticsTable() {
+    els.analyticsTableBody.innerHTML = weeklyAnalytics.map((week) => `
+      <tr>
+        <th scope="row">${escapeHtml(formatAnalyticsWeek(week.start))}</th>
+        <td>${formatPrice(week.cost)}</td>
+        <td>${formatPrice(week.gain)}</td>
+        <td>${week.pizzas}</td>
+      </tr>
+    `).join("");
+  }
+
+  function renderWeeklyAnalyticsChart() {
+    const canvas = els.analyticsChart;
+    const bounds = canvas.getBoundingClientRect();
+    if (!bounds.width || !weeklyAnalytics.length) return;
+
+    const pixelRatio = window.devicePixelRatio || 1;
+    const width = bounds.width;
+    const height = 340;
+    canvas.width = Math.round(width * pixelRatio);
+    canvas.height = Math.round(height * pixelRatio);
+    const context = canvas.getContext("2d");
+    context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+    context.clearRect(0, 0, width, height);
+
+    const costColor = "#e0a458";
+    const gainColor = "#8fca7a";
+    const pizzasColor = "#75b8d1";
+    const mutedColor = "#b9aaa0";
+    const gridColor = "#514941";
+    const plot = { left: 72, right: width - 62, top: 22, bottom: height - 48 };
+    const plotWidth = Math.max(1, plot.right - plot.left);
+    const plotHeight = plot.bottom - plot.top;
+    const maxMoneyValue = Math.max(1, ...weeklyAnalytics.map((week) => week.cost + week.gain));
+    const maxMoney = Math.ceil(maxMoneyValue / 5) * 5 || 5;
+    const maxPizzasValue = Math.max(1, ...weeklyAnalytics.map((week) => week.pizzas));
+    const maxPizzas = Math.ceil(maxPizzasValue / 5) * 5 || 5;
+    const labelFont = "12px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+
+    context.font = labelFont;
+    context.lineWidth = 1;
+    for (let tick = 0; tick <= 4; tick += 1) {
+      const y = plot.bottom - (plotHeight * tick) / 4;
+      context.strokeStyle = gridColor;
+      context.beginPath();
+      context.moveTo(plot.left, y);
+      context.lineTo(plot.right, y);
+      context.stroke();
+      context.fillStyle = mutedColor;
+      context.textAlign = "right";
+      context.textBaseline = "middle";
+      context.fillText(formatPrice((maxMoney * tick) / 4), plot.left - 9, y);
+      context.textAlign = "left";
+      context.fillText(String(Math.round((maxPizzas * tick) / 4)), plot.right + 9, y);
+    }
+
+    const band = plotWidth / weeklyAnalytics.length;
+    const barWidth = Math.max(3, Math.min(11, band * 0.18));
+    weeklyAnalytics.forEach((week, index) => {
+      const center = plot.left + band * (index + 0.5);
+      const costHeight = (week.cost / maxMoney) * plotHeight;
+      const gainHeight = (week.gain / maxMoney) * plotHeight;
+      const pizzasHeight = (week.pizzas / maxPizzas) * plotHeight;
+      const gap = Math.max(2, barWidth * 0.25);
+      const firstX = center - (3 * barWidth + 2 * gap) / 2;
+
+      context.fillStyle = costColor;
+      context.fillRect(firstX, plot.bottom - costHeight, barWidth, costHeight);
+      context.fillStyle = gainColor;
+      context.fillRect(firstX + barWidth + gap, plot.bottom - gainHeight, barWidth, gainHeight);
+      context.fillStyle = pizzasColor;
+      context.fillRect(firstX + 2 * (barWidth + gap), plot.bottom - pizzasHeight, barWidth, pizzasHeight);
+
+      if (index % 2 === 0 || index === weeklyAnalytics.length - 1) {
+        context.fillStyle = mutedColor;
+        context.textAlign = "center";
+        context.textBaseline = "top";
+        context.fillText(formatAnalyticsWeek(week.start), center, plot.bottom + 10);
+      }
+    });
+  }
+
+  async function loadWeeklyAnalytics() {
+    const currentWeek = utcWeekStart(new Date());
+    const firstWeek = new Date(currentWeek);
+    firstWeek.setUTCDate(firstWeek.getUTCDate() - 11 * 7);
+    const weeks = Array.from({ length: 12 }, (_, index) => {
+      const start = new Date(firstWeek);
+      start.setUTCDate(start.getUTCDate() + index * 7);
+      return { start, cost: 0, gain: 0, pizzas: 0 };
+    });
+    const weekLookup = new Map(weeks.map((week) => [week.start.toISOString().slice(0, 10), week]));
+
+    els.analyticsRefresh.disabled = true;
+    els.analyticsStatus.hidden = true;
+    try {
+      const { data, error } = await getClient()
+        .from("orders")
+        .select("created_at, status, order_items(quantity, ingredient_cost, gain, menu_items(ingredient_cost, gain))")
+        .gte("created_at", firstWeek.toISOString())
+        .neq("status", "cancelled")
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+
+      (data || []).forEach((order) => {
+        const key = utcWeekStart(new Date(order.created_at)).toISOString().slice(0, 10);
+        const week = weekLookup.get(key);
+        if (!week) return;
+        (order.order_items || []).forEach((line) => {
+          const quantity = Number(line.quantity) || 0;
+          const currentMenu = Array.isArray(line.menu_items) ? line.menu_items[0] : line.menu_items;
+          const unitCost = Number(line.ingredient_cost ?? currentMenu?.ingredient_cost ?? 0);
+          const unitGain = Number(line.gain ?? currentMenu?.gain ?? 0);
+          week.pizzas += quantity;
+          week.cost += unitCost * quantity;
+          week.gain += unitGain * quantity;
+        });
+      });
+
+      weeklyAnalytics = weeks.map((week) => ({
+        ...week,
+        cost: Math.round((week.cost + Number.EPSILON) * 100) / 100,
+        gain: Math.round((week.gain + Number.EPSILON) * 100) / 100
+      }));
+      els.analyticsPeriod.textContent = t("admin.analytics.period", {
+        start: formatAnalyticsWeek(firstWeek),
+        end: formatAnalyticsWeek(currentWeek)
+      });
+      renderWeeklyAnalyticsTable();
+      renderWeeklyAnalyticsChart();
+    } catch (error) {
+      console.error("Failed to load weekly analytics:", error);
+      els.analyticsStatus.textContent = t("admin.analytics.loadError");
+      els.analyticsStatus.hidden = false;
+    } finally {
+      els.analyticsRefresh.disabled = false;
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // Slots
   // ---------------------------------------------------------------------------
@@ -378,6 +535,11 @@
   // Inventory
   // ---------------------------------------------------------------------------
   function renderInventory() {
+    const totalValue = inventory.reduce(
+      (sum, item) => sum + Number(item.quantity || 0) * Number(item.unit_cost || 0),
+      0
+    );
+    els.inventoryTotal.textContent = formatPrice(totalValue);
     if (!inventory.length) {
       els.inventoryFeed.innerHTML = `<p class="empty-state">${t("admin.inv.empty")}</p>`;
       return;
@@ -392,6 +554,8 @@
             <span class="inventory-badge ${low ? "is-low" : "is-ok"}">${low ? t("admin.inv.low") : t("admin.inv.ok")}</span>
           </div>
           <p class="inventory-qty"><strong>${item.quantity}</strong> ${escapeHtml(item.unit)}</p>
+          <p class="inventory-cost">${t("admin.inv.unitCost", { price: formatPrice(item.unit_cost), unit: escapeHtml(item.unit) })}</p>
+          <p class="inventory-value">${t("admin.inv.itemValue", { value: formatPrice(Number(item.quantity) * Number(item.unit_cost || 0)) })}</p>
           <p class="inventory-threshold">${t("admin.inv.threshold", { value: item.low_threshold, unit: escapeHtml(item.unit) })}</p>
           <div class="inventory-actions">
             <button class="btn btn-outline btn-sm" data-action="edit">${t("admin.inv.edit")}</button>
@@ -412,6 +576,10 @@
       if (error) throw error;
       inventory = data || [];
       renderInventory();
+      if (menuItems.length) {
+        syncMenuPricingFromInventory();
+        renderMenu();
+      }
     } catch (err) {
       console.error("Failed to load inventory:", err);
       toast(t("admin.inv.loadError"), "error");
@@ -453,6 +621,7 @@
             <span class="menu-item-name">${escapeHtml(item.name)}</span>
             <span class="menu-item-price">${formatPrice(item.price)}</span>
           </div>
+          <p class="menu-item-cost">${t("admin.menu.costBreakdown", { cost: formatPrice(item.ingredient_cost), gain: formatPrice(item.gain) })}</p>
           <p class="menu-item-desc">${escapeHtml(item.description || "")}</p>
           ${ingredients ? `<p class="menu-item-ingredients">${ingredients}</p>` : ""}
           <p class="menu-item-meta">
@@ -476,7 +645,7 @@
         await Promise.all([
           getClient().from("categories").select("*").order("sort_order"),
           getClient().from("menu_items").select("*").order("name"),
-          getClient().from("menu_item_ingredients").select("menu_item_id, quantity, inventory(name, unit)")
+           getClient().from("menu_item_ingredients").select("menu_item_id, inventory_id, quantity, inventory(name, unit, unit_cost)")
         ]);
       if (catError) throw catError;
       if (itemError) throw itemError;
@@ -486,6 +655,7 @@
         ...item,
         ingredients: (recipes || []).filter((line) => line.menu_item_id === item.id)
       }));
+      syncMenuPricingFromInventory();
       renderMenu();
     } catch (err) {
       console.error("Failed to load menu:", err);
@@ -690,6 +860,44 @@
     container.appendChild(row);
   }
 
+  function recipeCostFromRows() {
+    let cost = 0;
+    els.editorFields.querySelectorAll(".ingredient-row").forEach((row) => {
+      const stockItem = inventory.find((entry) => entry.id === row.querySelector(".ingredient-select").value);
+      const quantity = Number(row.querySelector(".ingredient-quantity").value);
+      if (stockItem && Number.isFinite(quantity) && quantity > 0) {
+        cost += quantity * Number(stockItem.unit_cost || 0);
+      }
+    });
+    return Math.round((cost + Number.EPSILON) * 100) / 100;
+  }
+
+  function refreshMenuPricePreview() {
+    const costOutput = els.editorFields.querySelector("#f-ingredient-cost");
+    const gainInput = els.editorFields.querySelector("#f-gain");
+    const priceOutput = els.editorFields.querySelector("#f-final-price");
+    if (!costOutput || !gainInput || !priceOutput) return;
+    const cost = recipeCostFromRows();
+    const gain = Math.max(0, Number(gainInput.value) || 0);
+    costOutput.textContent = formatPrice(cost);
+    priceOutput.textContent = formatPrice(Math.round((cost + gain + Number.EPSILON) * 100) / 100);
+  }
+
+  function syncMenuPricingFromInventory() {
+    menuItems.forEach((item) => {
+      const cost = (item.ingredients || []).reduce(
+        (sum, line) => {
+          const stock = inventory.find((entry) => entry.id === line.inventory_id);
+          return sum + Number(line.quantity || 0) * Number(stock?.unit_cost ?? line.inventory?.unit_cost ?? 0);
+        },
+        0
+      );
+      item.ingredient_cost = Math.round((cost + Number.EPSILON) * 100) / 100;
+      item.gain = Number(item.gain || 0);
+      item.price = Math.round((item.ingredient_cost + item.gain + Number.EPSILON) * 100) / 100;
+    });
+  }
+
   async function openEditor(kind, id) {
     editorContext = { kind, id };
     els.editorError.hidden = true;
@@ -717,6 +925,7 @@
           <option value="ml" ${item && item.unit === "ml" ? "selected" : ""}>ml</option>
         </select></label>
         <label class="field"><span>${t("admin.editor.inv.qty")}</span><input type="number" id="f-qty" min="0" step="0.001" value="${item ? item.quantity : 0}" required /></label>
+        <label class="field"><span>${t("admin.editor.inv.unitCost")}</span><input type="number" id="f-unit-cost" min="0" step="0.01" value="${item ? item.unit_cost ?? 0 : 0}" required /><small id="f-unit-cost-hint" class="field-hint">${t("admin.editor.inv.unitCostHint", { unit: item ? item.unit : "pz" })}</small></label>
         <label class="field"><span>${t("admin.editor.inv.threshold")}</span><input type="number" id="f-threshold" min="0" step="0.001" value="${item ? item.low_threshold : 0}" required /></label>
       `;
     } else if (kind === "menu") {
@@ -742,7 +951,11 @@
         <label class="field"><span>${t("admin.editor.menu.name")}</span><input type="text" id="f-name" value="${item ? escapeHtml(item.name) : ""}" required /></label>
         <label class="field"><span>${t("admin.editor.menu.category")}</span><select id="f-category"><option value="">—</option>${catOptions}</select></label>
         <label class="field"><span>${t("admin.editor.menu.desc")}</span><textarea id="f-desc" rows="2">${item ? escapeHtml(item.description || "") : ""}</textarea></label>
-        <label class="field"><span>${t("admin.editor.menu.price")}</span><input type="number" id="f-price" min="0" step="0.01" value="${item ? item.price : ""}" required /></label>
+        <div class="menu-price-breakdown">
+          <p><span>${t("admin.editor.menu.ingredientCost")}</span><strong id="f-ingredient-cost">${formatPrice(item?.ingredient_cost || 0)}</strong></p>
+          <label class="field"><span>${t("admin.editor.menu.gain")}</span><input type="number" id="f-gain" min="0" step="0.01" value="${item ? item.gain ?? 0 : 0}" required /></label>
+          <p class="menu-final-price"><span>${t("admin.editor.menu.finalPrice")}</span><strong id="f-final-price">${formatPrice(item?.price || 0)}</strong></p>
+        </div>
         <section class="recipe-field">
           <div class="recipe-head"><strong>${t("admin.editor.menu.ingredients")}</strong><button type="button" id="ingredient-add" class="btn btn-outline btn-sm">${t("admin.editor.menu.addIngredient")}</button></div>
           <div id="ingredient-rows" class="ingredient-rows"></div>
@@ -757,6 +970,7 @@
       `;
       const rows = els.editorFields.querySelector("#ingredient-rows");
       (recipe.length ? recipe : [{}]).forEach((line) => addIngredientRow(rows, line));
+      refreshMenuPricePreview();
     }
 
     els.editorModal.hidden = false;
@@ -801,8 +1015,12 @@
           name: els.editorFields.querySelector("#f-name").value.trim(),
           unit: els.editorFields.querySelector("#f-unit").value,
           quantity: Number(els.editorFields.querySelector("#f-qty").value),
+          unit_cost: Number(els.editorFields.querySelector("#f-unit-cost").value),
           low_threshold: Number(els.editorFields.querySelector("#f-threshold").value)
         };
+        if (!Number.isFinite(payload.unit_cost) || payload.unit_cost < 0) {
+          throw new Error("invalid_inventory_cost");
+        }
         if (id) {
           const { error } = await getClient().from("inventory").update(payload).eq("id", id);
           if (error) throw error;
@@ -833,8 +1051,8 @@
         });
 
         const name = els.editorFields.querySelector("#f-name").value.trim();
-        const price = Number(els.editorFields.querySelector("#f-price").value);
-        if (!name || !Number.isFinite(price) || price < 0) throw new Error("invalid_menu_item");
+        const gain = Number(els.editorFields.querySelector("#f-gain").value);
+        if (!name || !Number.isFinite(gain) || gain < 0) throw new Error("invalid_menu_item");
 
         const item = id ? menuItems.find((entry) => entry.id === id) : null;
         let photoPath = null;
@@ -853,7 +1071,7 @@
           p_name: name,
           p_category_id: els.editorFields.querySelector("#f-category").value || null,
           p_description: els.editorFields.querySelector("#f-desc").value.trim() || null,
-          p_price: price,
+          p_gain: gain,
           p_is_available: els.editorFields.querySelector("#f-available").value === "true",
           p_image_url: imageUrl,
           p_ingredients: ingredients
@@ -894,6 +1112,7 @@
             if (!full) return;
             orders = [full, ...orders];
             renderOrders();
+            loadWeeklyAnalytics();
             playChime();
             toast(t("admin.orders.newOrder", { tracking: full.tracking_id }), "success");
           });
@@ -909,6 +1128,7 @@
             orders[idx] = { ...orders[idx], ...updated };
             renderOrders();
           }
+          loadWeeklyAnalytics();
         }
       )
       .on(
@@ -955,6 +1175,8 @@
   function wireEvents() {
     els.loginForm.addEventListener("submit", handleLogin);
     els.logoutBtn.addEventListener("click", handleLogout);
+    els.analyticsRefresh.addEventListener("click", loadWeeklyAnalytics);
+    window.addEventListener("resize", renderWeeklyAnalyticsChart);
 
     // Tabs
     document.querySelectorAll(".tab").forEach((tab) => {
@@ -1027,15 +1249,24 @@
     els.editorFields.addEventListener("click", (event) => {
       if (event.target.closest("#ingredient-add")) {
         addIngredientRow(els.editorFields.querySelector("#ingredient-rows"));
+        refreshMenuPricePreview();
       } else if (event.target.closest(".ingredient-remove")) {
         event.target.closest(".ingredient-row").remove();
+        refreshMenuPricePreview();
       }
+    });
+    els.editorFields.addEventListener("input", (event) => {
+      if (event.target.matches(".ingredient-quantity, #f-gain")) refreshMenuPricePreview();
     });
     els.editorFields.addEventListener("change", (event) => {
       if (event.target.matches(".ingredient-select")) {
         const row = event.target.closest(".ingredient-row");
         row.querySelector(".ingredient-unit").textContent =
           inventory.find((stockItem) => stockItem.id === event.target.value)?.unit || "";
+        refreshMenuPricePreview();
+      } else if (event.target.matches("#f-unit")) {
+        const hint = els.editorFields.querySelector("#f-unit-cost-hint");
+        hint.textContent = t("admin.editor.inv.unitCostHint", { unit: event.target.value });
       } else if (event.target.matches("#f-photo")) {
         const preview = els.editorFields.querySelector("#f-photo-preview");
         const file = event.target.files[0];
@@ -1083,6 +1314,8 @@
       renderInventory();
       renderMenu();
       renderSiteContent();
+      renderWeeklyAnalyticsTable();
+      renderWeeklyAnalyticsChart();
     });
   }
 

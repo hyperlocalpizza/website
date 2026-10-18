@@ -65,6 +65,22 @@ in the Supabase SQL Editor. It preserves menu items and adds the recipe table,
 stock deduction trigger, and public JPEG photo bucket. Existing items start
 without recipe amounts or photos; staff add those by editing each item.
 
+To track ingredient costs, run
+[`migrations/20261017_inventory_unit_cost.sql`](migrations/20261017_inventory_unit_cost.sql)
+in the Supabase SQL Editor. Existing inventory values default to €0.00 until
+their unit costs are entered in the staff dashboard.
+
+For menu pricing based on recipe cost plus gain, first apply the recipe
+migration above, then run
+[`migrations/20261017_menu_item_gain_pricing.sql`](migrations/20261017_menu_item_gain_pricing.sql).
+It backfills existing pizzas, changes the staff save function, and recalculates
+pizza prices if a linked inventory unit cost changes. It also snapshots menu
+ingredient cost and gain onto new order lines for weekly reporting.
+
+The Analytics tab shows the last 12 weeks of non-cancelled pizza quantities,
+ingredient costs, and gains. Earlier orders without saved cost snapshots use
+current menu values as estimates.
+
 To enable the staff dashboard's multilingual Site content editor, also run
 [`migrations/20261017_site_content.sql`](migrations/20261017_site_content.sql)
 in the Supabase SQL Editor. The storefront reads the published copy on page

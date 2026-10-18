@@ -7,11 +7,11 @@
 
   const VIPizza = (window.VIPizza = window.VIPizza || {});
 
-  /** Format a number as EUR currency (Italian locale). */
+  /** Format a number as US dollar currency. */
   function formatPrice(value) {
-    return new Intl.NumberFormat("it-IT", {
+    return new Intl.NumberFormat("en-US", {
       style: "currency",
-      currency: "EUR"
+      currency: "USD"
     }).format(Number(value) || 0);
   }
 
