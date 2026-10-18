@@ -94,6 +94,12 @@ in the SQL Editor. It adds public read access to the approved content fields and
 restricts content publishing to authenticated staff. The storefront uses its
 built-in translations if Supabase is unavailable.
 
+For checkout to reserve preparation capacity and create orders without
+exposing order records to public reads, run
+[`migrations/20261017_submit_order_atomically.sql`](migrations/20261017_submit_order_atomically.sql)
+in the Supabase SQL Editor. It atomically reserves slot capacity, creates the
+order and its items, and returns only the tracking code.
+
 ### Option B — Local development (Supabase CLI + Docker)
 
 1. Make sure Docker is running.
@@ -115,12 +121,19 @@ built-in translations if Supabase is unavailable.
 
 ## 2. Configure the site
 
-Open [`js/config.js`](js/config.js) and replace the two placeholders:
+Open [`js/config.js`](js/config.js) and replace the Supabase placeholders:
 
 ```js
 const SUPABASE_URL = "https://YOUR_PROJECT_REF.supabase.co";
 const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
 ```
+
+To enable delivery address suggestions, create a Geoapify account and set
+`GEOAPIFY_API_KEY` in the same file to an API key from your project dashboard.
+This key is used by the browser and is therefore public; do not use a
+private/service key. Without it, customers can still enter their address
+manually. Geoapify account plans may have usage limits; see the
+[current plan details](https://www.geoapify.com/pricing/).
 
 For local development:
 
@@ -201,7 +214,14 @@ jobs:
 ### Storefront (`index.html`)
 - Fetches `categories` and `menu_items` from Supabase (public RLS allows reads).
 - Cart state is kept in `localStorage` (quantities, totals).
-- At checkout, customers pick a **pickup slot** (or delivery address).
+- At checkout, customers select a required **preparation time** for every
+  order, whether pickup or delivery.
+- Delivery uses separate street, optional apartment/floor, city, state/region,
+  postal code, and country fields. Geoapify suggestions start after three
+  characters and are not restricted to a country or service area. Manual entry
+  remains available if there is no match. The formatted address is stored in
+  the existing `orders.address` field. Suggestions are geocoding results, not
+  postal deliverability verification.
 - Checkout reserves slot capacity via the `check_and_reserve_slot` RPC, then
   inserts into `orders` and `order_items` (public RLS allows inserts).
 - A confirmation screen shows the unique `tracking_id`.
@@ -212,7 +232,7 @@ Four tabs, all behind **Supabase Auth** (email/password):
 1. **Ordini (Orders)** — realtime feed of new orders (chime + toast), with
    single-click status advancement:
    `pending → preparing → in_oven → out_for_delivery → completed` (or cancel).
-2. **Orari (Slots)** — manage pickup time slots: add, edit, toggle active,
+2. **Orari (Slots)** — manage preparation time slots: add, edit, toggle active,
    delete, and see live capacity (reserved / max pizzas).
 3. **Magazzino (Inventory)** — track stock levels with low-stock warnings.
    Stock is decremented automatically when orders are placed (DB trigger).

@@ -15,13 +15,18 @@
   // State
   // ---------------------------------------------------------------------------
   const CART_KEY = "vipizza_cart";
-  // Update this regex for the actual delivery area you serve.
-  const SERVICE_AREA = /Bloomfield Hills|Bloomfield Hills, Michigan|Bloomfield Hills MI|Bloomfield Hills, MI/i;
+  const GEOAPIFY_API = "https://api.geoapify.com/v1/geocode/autocomplete";
 
   let menuItems = [];
   let categories = [];
   let slots = [];
   let cart = loadCart();
+  let addressSearchTimer = null;
+  let addressSearchController = null;
+  let addressSearchId = 0;
+  let addressSuggestions = [];
+  let activeAddressSuggestion = -1;
+  let selectedAddressKey = "";
 
   // ---------------------------------------------------------------------------
   // DOM references
@@ -40,11 +45,16 @@
     checkoutModal: document.getElementById("checkout-modal"),
     checkoutForm: document.getElementById("checkout-form"),
     checkoutError: document.getElementById("checkout-error"),
-    slotField: document.getElementById("slot-field"),
     slotSelect: document.getElementById("slot-select"),
     slotHint: document.getElementById("slot-hint"),
     addressField: document.getElementById("address-field"),
     customerAddress: document.getElementById("customer-address"),
+    customerAddressApt: document.getElementById("customer-address-apt"),
+    customerAddressCity: document.getElementById("customer-address-city"),
+    customerAddressState: document.getElementById("customer-address-state"),
+    customerAddressZip: document.getElementById("customer-address-zip"),
+    customerAddressCountry: document.getElementById("customer-address-country"),
+    addressSuggestions: document.getElementById("address-suggestions"),
     addressHint: document.getElementById("address-hint"),
     confirmationModal: document.getElementById("confirmation-modal"),
     confirmationTracking: document.getElementById("confirmation-tracking"),
@@ -269,16 +279,183 @@
     document.body.classList.remove("no-scroll");
   }
 
+  function setAddressHint(message, isError = false) {
+    els.addressHint.textContent = message;
+    els.addressHint.classList.toggle("is-error", isError);
+  }
+
+  function closeAddressSuggestions() {
+    els.addressSuggestions.hidden = true;
+    els.customerAddress.setAttribute("aria-expanded", "false");
+    els.customerAddress.removeAttribute("aria-activedescendant");
+    activeAddressSuggestion = -1;
+  }
+
+  function addressFields() {
+    return {
+      street: els.customerAddress.value.trim(),
+      apt: els.customerAddressApt.value.trim(),
+      city: els.customerAddressCity.value.trim(),
+      state: els.customerAddressState.value.trim(),
+      zip: els.customerAddressZip.value.trim(),
+      country: els.customerAddressCountry.value.trim()
+    };
+  }
+
+  function addressKey(address) {
+    return [address.street, address.city, address.state, address.zip, address.country]
+      .map((part) => part.trim().toLowerCase())
+      .join("|");
+  }
+
   function validateAddress() {
-    const value = els.customerAddress.value.trim();
-    if (!value) {
-      els.addressHint.textContent = "";
-      return true;
+    const address = addressFields();
+    const isComplete = address.street && address.city;
+    if (!isComplete) {
+      setAddressHint("");
+      return false;
     }
-    const ok = SERVICE_AREA.test(value);
-    els.addressHint.textContent = ok ? t("checkout.address.ok") : t("checkout.address.bad");
-    els.addressHint.classList.toggle("is-error", !ok);
-    return ok;
+    setAddressHint(t(selectedAddressKey === addressKey(address)
+      ? "checkout.address.selected"
+      : "checkout.address.ready"));
+    return true;
+  }
+
+  function formatSuggestion(feature) {
+    const address = feature.properties || {};
+    if (address.formatted) return address.formatted;
+    const line = [address.housenumber, address.street || address.name].filter(Boolean).join(" ");
+    const locality = [address.city, address.state, address.postcode].filter(Boolean).join(", ");
+    return [line, locality].filter(Boolean).join(", ");
+  }
+
+  function renderAddressSuggestions(features) {
+    const seenAddresses = new Set();
+    addressSuggestions = features.filter((feature) => {
+      const key = formatSuggestion(feature).toLowerCase();
+      if (seenAddresses.has(key)) return false;
+      seenAddresses.add(key);
+      return true;
+    });
+    activeAddressSuggestion = -1;
+
+    if (!addressSuggestions.length) {
+      closeAddressSuggestions();
+      setAddressHint(t("checkout.address.noResults"));
+      return;
+    }
+
+    els.addressSuggestions.innerHTML = addressSuggestions.map((feature, index) =>
+      `<li id="address-suggestion-${index}" role="option" aria-selected="false" data-index="${index}">${escapeHtml(formatSuggestion(feature))}</li>`
+    ).join("");
+    els.addressSuggestions.hidden = false;
+    els.customerAddress.setAttribute("aria-expanded", "true");
+  }
+
+  function scheduleAddressSearch() {
+    clearTimeout(addressSearchTimer);
+    addressSearchId += 1;
+    if (addressSearchController) addressSearchController.abort();
+    closeAddressSuggestions();
+    addressSuggestions = [];
+
+    const address = addressFields();
+    if (address.street.length < 3) {
+      setAddressHint("");
+      return;
+    }
+    if (!window.VIPizza.config?.GEOAPIFY_API_KEY) {
+      setAddressHint(t("checkout.address.apiKeyMissing"));
+      return;
+    }
+
+    addressSearchTimer = setTimeout(searchAddresses, 250);
+  }
+
+  async function searchAddresses() {
+    const requestId = ++addressSearchId;
+    const address = addressFields();
+    const query = [address.street, address.city, address.state, address.zip, address.country]
+      .filter(Boolean)
+      .join(", ");
+    const controller = new AbortController();
+    let timedOut = false;
+    addressSearchController = controller;
+    setAddressHint(t("checkout.address.searching"));
+    const timeoutId = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, 8000);
+
+    try {
+      const url = new URL(GEOAPIFY_API);
+      url.search = new URLSearchParams({
+        text: query,
+        limit: "20",
+        lang: "en",
+        format: "json",
+        apiKey: window.VIPizza.config.GEOAPIFY_API_KEY
+      });
+      const response = await fetch(url, { signal: controller.signal });
+      if (!response.ok) throw new Error(`Geoapify returned HTTP ${response.status}`);
+      const result = await response.json();
+      if (requestId !== addressSearchId) return;
+      const features = Array.isArray(result?.results)
+        ? result.results.map((properties) => ({ properties }))
+        : Array.isArray(result?.features)
+          ? result.features
+          : [];
+      renderAddressSuggestions(features);
+    } catch (error) {
+      if (requestId !== addressSearchId || (error.name === "AbortError" && !timedOut)) return;
+      console.error("Address autocomplete failed:", error);
+      closeAddressSuggestions();
+      setAddressHint(t("checkout.address.searchError"), true);
+    } finally {
+      clearTimeout(timeoutId);
+      if (requestId === addressSearchId) addressSearchController = null;
+    }
+  }
+
+  function selectAddressSuggestion(index) {
+    const suggestion = addressSuggestions[index];
+    if (!suggestion) return;
+    const address = suggestion.properties;
+    const street = address.street || address.name || "";
+    els.customerAddress.value = address.address_line1 ||
+      [address.housenumber, street].filter(Boolean).join(" ");
+    els.customerAddressCity.value = address.city || "";
+    els.customerAddressState.value = address.state || address.state_code || "";
+    els.customerAddressZip.value = address.postcode || "";
+    els.customerAddressCountry.value = address.country || "";
+    closeAddressSuggestions();
+    selectedAddressKey = addressKey(addressFields());
+    validateAddress();
+    els.customerAddress.focus();
+  }
+
+  function moveAddressSuggestion(offset) {
+    if (els.addressSuggestions.hidden || !addressSuggestions.length) return;
+    activeAddressSuggestion = (activeAddressSuggestion + offset + addressSuggestions.length) % addressSuggestions.length;
+    [...els.addressSuggestions.children].forEach((option, index) => {
+      const active = index === activeAddressSuggestion;
+      option.classList.toggle("is-active", active);
+      option.setAttribute("aria-selected", String(active));
+    });
+    const activeOption = els.addressSuggestions.children[activeAddressSuggestion];
+    els.customerAddress.setAttribute("aria-activedescendant", activeOption.id);
+    activeOption.scrollIntoView({ block: "nearest" });
+  }
+
+  function updateDeliveryFields() {
+    const isDelivery = els.checkoutForm.delivery_type.value === "delivery";
+    els.addressField.hidden = !isDelivery;
+    if (!isDelivery) {
+      clearTimeout(addressSearchTimer);
+      addressSearchId += 1;
+      if (addressSearchController) addressSearchController.abort();
+      closeAddressSuggestions();
+    }
   }
 
   async function handleCheckout(event) {
@@ -288,7 +465,7 @@
     const name = els.checkoutForm.customer_name.value.trim();
     const phone = els.checkoutForm.phone.value.trim();
     const deliveryType = els.checkoutForm.delivery_type.value;
-    const address = els.customerAddress.value.trim();
+    const addressFieldsValue = addressFields();
     const notes = els.checkoutForm.notes.value.trim();
     const slotId = els.slotSelect.value;
     const items = cartItems();
@@ -297,15 +474,18 @@
       showCheckoutError(t("checkout.err.incomplete"));
       return;
     }
-    if (deliveryType === "delivery" && !address) {
+    if (deliveryType === "delivery" && (
+      !addressFieldsValue.street ||
+      !addressFieldsValue.city
+    )) {
       showCheckoutError(t("checkout.err.address"));
       return;
     }
     if (deliveryType === "delivery" && !validateAddress()) {
-      showCheckoutError(t("checkout.err.area"));
+      showCheckoutError(t("checkout.err.address"));
       return;
     }
-    if (deliveryType === "pickup" && !slotId) {
+    if (!slotId) {
       showCheckoutError(t("checkout.err.slot"));
       return;
     }
@@ -315,48 +495,40 @@
     submitBtn.textContent = t("checkout.submitting");
 
     try {
-      const total = cartTotal();
+      const address = deliveryType === "delivery"
+        ? [
+            addressFieldsValue.street,
+            addressFieldsValue.apt,
+            [addressFieldsValue.city, addressFieldsValue.state, addressFieldsValue.zip, addressFieldsValue.country]
+              .filter(Boolean)
+              .join(", ")
+          ].filter(Boolean).join(", ")
+        : null;
 
-      // Reserve slot capacity first (pickup only).
-      if (deliveryType === "pickup") {
-        const { data: reserved, error: reserveError } = await getClient().rpc(
-          "check_and_reserve_slot",
-          { p_slot_id: slotId, p_requested_quantity: cartCount() }
-        );
-        if (reserveError) throw reserveError;
-        if (reserved !== true) {
-          showCheckoutError(t("checkout.err.slotFull"));
-          await loadSlots();
-          return;
-        }
-      }
-
-      const { data: order, error: orderError } = await getClient()
-        .from("orders")
-        .insert({
-          customer_name: name,
-          phone,
-          delivery_type: deliveryType,
-          address: deliveryType === "delivery" ? address : null,
-          notes: notes || null,
-          slot_id: deliveryType === "pickup" ? slotId : null,
-          total_amount: total
-        })
-        .select("id, tracking_id")
-        .single();
-
+      const { data: order, error: orderError } = await getClient().rpc("submit_order", {
+        p_customer_name: name,
+        p_phone: phone,
+        p_delivery_type: deliveryType,
+        p_address: address,
+        p_notes: notes || null,
+        p_slot_id: slotId,
+        p_items: items.map((item) => ({
+          menu_item_id: item.id,
+          quantity: item.quantity
+        }))
+      });
       if (orderError) throw orderError;
-
-      const orderItems = items.map((item) => ({
-        order_id: order.id,
-        menu_item_id: item.id,
-        item_name: item.name,
-        unit_price: item.price,
-        quantity: item.quantity
-      }));
-
-      const { error: itemsError } = await getClient().from("order_items").insert(orderItems);
-      if (itemsError) throw itemsError;
+      if (order?.error === "slot_full") {
+        showCheckoutError(t("checkout.err.slotFull"));
+        await loadSlots();
+        return;
+      }
+      if (order?.error) {
+        throw new Error(`Order submission failed: ${order.error}`);
+      }
+      if (typeof order?.tracking_id !== "string") {
+        throw new Error("Order submission returned no tracking ID");
+      }
 
       // Success: clear cart and show confirmation.
       cart = {};
@@ -366,7 +538,8 @@
       showConfirmation(order.tracking_id);
     } catch (err) {
       console.error("Checkout failed:", err);
-      showCheckoutError(t("checkout.err.generic"));
+      const needsMigration = ["PGRST202", "42883"].includes(err.code);
+      showCheckoutError(t(needsMigration ? "checkout.err.setup" : "checkout.err.generic"));
     } finally {
       submitBtn.disabled = false;
       submitBtn.textContent = t("checkout.submit");
@@ -473,7 +646,50 @@
 
     els.checkoutBtn.addEventListener("click", openCheckout);
     els.checkoutForm.addEventListener("submit", handleCheckout);
-    els.customerAddress.addEventListener("input", validateAddress);
+    [
+      els.customerAddress,
+      els.customerAddressCity,
+      els.customerAddressState,
+      els.customerAddressZip,
+      els.customerAddressCountry
+    ].forEach((input) => {
+      input.addEventListener("input", () => {
+        selectedAddressKey = "";
+        if (input === els.customerAddress && !input.value.trim()) {
+          els.customerAddressCity.value = "";
+          els.customerAddressState.value = "";
+          els.customerAddressZip.value = "";
+          els.customerAddressCountry.value = "";
+        }
+        validateAddress();
+        scheduleAddressSearch();
+      });
+    });
+    els.customerAddress.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+        moveAddressSuggestion(1);
+      } else if (event.key === "ArrowUp") {
+        event.preventDefault();
+        moveAddressSuggestion(-1);
+      } else if (event.key === "Enter" && !els.addressSuggestions.hidden) {
+        event.preventDefault();
+        selectAddressSuggestion(activeAddressSuggestion >= 0 ? activeAddressSuggestion : 0);
+      } else if (event.key === "Escape") {
+        closeAddressSuggestions();
+      }
+    });
+    els.addressSuggestions.addEventListener("mousedown", (event) => event.preventDefault());
+    els.addressSuggestions.addEventListener("click", (event) => {
+      const option = event.target.closest("[data-index]");
+      if (option) selectAddressSuggestion(Number(option.dataset.index));
+    });
+    els.customerAddress.addEventListener("blur", () => {
+      setTimeout(closeAddressSuggestions, 150);
+    });
+    els.checkoutForm.querySelectorAll('input[name="delivery_type"]').forEach((input) =>
+      input.addEventListener("change", updateDeliveryFields)
+    );
     els.slotSelect.addEventListener("change", updateSlotHint);
     els.confirmationClose.addEventListener("click", closeConfirmation);
 
@@ -511,6 +727,7 @@
   // ---------------------------------------------------------------------------
   function init() {
     wireEvents();
+    updateDeliveryFields();
     renderCart();
     loadSiteContent();
     loadMenu();

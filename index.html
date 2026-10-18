@@ -145,18 +145,50 @@
         </fieldset>
 
         <label class="field" id="slot-field">
-          <span data-i18n="checkout.slot">Pickup time</span>
-          <select id="slot-select" name="slot_id">
+          <span data-i18n="checkout.slot">Preparation time</span>
+          <select id="slot-select" name="slot_id" required>
             <option value="" data-i18n="checkout.slot.ph">Select a time</option>
           </select>
           <small id="slot-hint" class="field-hint"></small>
         </label>
 
-        <label class="field" id="address-field">
-          <span data-i18n="checkout.address">Delivery address</span>
-          <input type="text" id="customer-address" name="address" autocomplete="street-address" data-i18n-placeholder="checkout.address.ph" placeholder="1234 W Orchard Hill Dr, Bloomfield Hill" />
-          <small id="address-hint" class="field-hint"></small>
-        </label>
+        <fieldset class="field" id="address-field">
+          <legend data-i18n="checkout.address">Delivery address</legend>
+          <div class="address-grid">
+            <label class="field address-field--wide">
+              <span data-i18n="checkout.address.street">Street address</span>
+              <input type="text" id="customer-address" name="address_street" autocomplete="address-line1" required data-i18n-placeholder="checkout.address.street.ph" placeholder="1234 W Orchard Hill Dr" role="combobox" aria-autocomplete="list" aria-haspopup="listbox" aria-controls="address-suggestions" aria-expanded="false" />
+              <ul id="address-suggestions" class="address-suggestions" role="listbox" hidden></ul>
+            </label>
+            <label class="field">
+              <span data-i18n="checkout.address.apt">Apt / floor (optional)</span>
+              <input type="text" id="customer-address-apt" name="address_apt" autocomplete="address-line2" data-i18n-placeholder="checkout.address.apt.ph" placeholder="Apt 2B" />
+            </label>
+            <label class="field">
+              <span data-i18n="checkout.address.city">City</span>
+              <input type="text" id="customer-address-city" name="address_city" autocomplete="address-level2" required data-i18n-placeholder="checkout.address.city.ph" placeholder="Bloomfield Hills" />
+            </label>
+            <label class="field">
+              <span data-i18n="checkout.address.state">State / region</span>
+              <input type="text" id="customer-address-state" name="address_state" autocomplete="address-level1" data-i18n-placeholder="checkout.address.state.ph" placeholder="State / region" />
+            </label>
+            <label class="field">
+              <span data-i18n="checkout.address.zip">ZIP / postal code</span>
+              <input type="text" id="customer-address-zip" name="address_zip" autocomplete="postal-code" data-i18n-placeholder="checkout.address.zip.ph" placeholder="Postal code" />
+            </label>
+            <label class="field">
+              <span data-i18n="checkout.address.country">Country</span>
+              <input type="text" id="customer-address-country" name="address_country" autocomplete="country-name" data-i18n-placeholder="checkout.address.country.ph" placeholder="Country" />
+            </label>
+          </div>
+          <small id="address-hint" class="field-hint" role="status"></small>
+          <div class="address-attribution">
+            <span data-i18n="checkout.address.attribution">Suggestions by</span>
+            <a href="https://www.geoapify.com/" target="_blank" rel="noopener noreferrer">Geoapify</a>
+            <span>·</span>
+            <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap contributors</a>
+          </div>
+        </fieldset>
 
         <label class="field">
           <span data-i18n="checkout.notes">Kitchen notes (optional)</span>
