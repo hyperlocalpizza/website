@@ -54,15 +54,27 @@ begin
     )
       or value->>'language' not in ('en', 'it', 'es')
       or char_length(coalesce(value->>'content', '')) > 500
-      or coalesce(value->>'content', '') = ''
   ) then
     raise exception 'Invalid site content entry';
   end if;
 
-  delete from public.site_content;
+  delete from public.site_content as saved
+  where exists (
+    select 1
+    from jsonb_array_elements(p_entries) as entry(value)
+    where value->>'content_key' = saved.content_key
+      and value->>'language' = saved.language
+      and btrim(coalesce(value->>'content', '')) = ''
+  );
+
   insert into public.site_content (content_key, language, content, updated_at, updated_by)
   select value->>'content_key', value->>'language', value->>'content', now(), auth.uid()
-  from jsonb_array_elements(p_entries) as entry(value);
+  from jsonb_array_elements(p_entries) as entry(value)
+  where btrim(coalesce(value->>'content', '')) <> ''
+  on conflict (content_key, language) do update set
+    content = excluded.content,
+    updated_at = excluded.updated_at,
+    updated_by = excluded.updated_by;
 end;
 $$;
 

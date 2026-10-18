@@ -613,9 +613,9 @@
     captureSiteContentDrafts();
     const entries = CONTENT_LANGUAGES.flatMap((language) =>
       CONTENT_GROUPS.flatMap((group) =>
-        group.fields.flatMap(([key]) => {
+        group.fields.map(([key]) => {
           const content = (siteContentDrafts[language][key] || "").trim();
-          return content ? [{ content_key: key, language, content }] : [];
+          return { content_key: key, language, content };
         })
       )
     );
@@ -625,17 +625,21 @@
     try {
       const { error } = await getClient().rpc("save_site_content", { p_entries: entries });
       if (error) throw error;
-      i18n.setContentOverrides(entries.map(({ content_key, language, content }) => ({
+      i18n.setContentOverrides(entries.filter(({ content }) => content).map(({ content_key, language, content }) => ({
         key: content_key,
         language,
         content
       })));
       els.siteContentStatus.textContent = t("admin.content.saved");
+      els.siteContentStatus.classList.remove("is-error");
       els.siteContentStatus.hidden = false;
       toast(t("admin.content.saved"), "success");
     } catch (error) {
       console.error("Failed to save site content:", error);
-      els.siteContentStatus.textContent = t("admin.content.saveError");
+      const detail = error?.message || t("admin.content.unknownError");
+      const code = error?.code ? ` (${error.code})` : "";
+      els.siteContentStatus.textContent = `${t("admin.content.saveError")}${code} ${detail}`;
+      els.siteContentStatus.classList.add("is-error");
       els.siteContentStatus.hidden = false;
     } finally {
       els.siteContentSave.disabled = false;
