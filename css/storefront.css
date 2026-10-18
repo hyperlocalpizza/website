@@ -413,6 +413,69 @@
   gap: 16px;
 }
 
+.address-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 16px;
+}
+
+.address-field--wide {
+  grid-column: 1 / -1;
+  position: relative;
+}
+
+#address-field {
+  min-width: 0;
+  border: 0;
+  padding: 0;
+}
+
+#address-field legend {
+  padding: 0;
+}
+
+.address-suggestions {
+  position: absolute;
+  z-index: 20;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  margin: 4px 0 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 14%);
+}
+
+.address-suggestions li {
+  padding: 10px 12px;
+  border-radius: calc(var(--radius) - 2px);
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: 14px;
+}
+
+.address-suggestions li:hover,
+.address-suggestions li.is-active {
+  background: #fff4ec;
+  color: var(--accent);
+}
+
+.address-attribution {
+  margin-top: -8px;
+  color: var(--muted);
+  font-family: var(--font-sans);
+  font-size: 11px;
+}
+
+.address-attribution a {
+  color: inherit;
+}
+
 .radio-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -528,6 +591,10 @@
 
   .form-grid {
     grid-template-columns: 1fr;
+  }
+
+  .address-grid {
+    gap: 0;
   }
 
   .hero {

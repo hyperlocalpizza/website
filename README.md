@@ -86,12 +86,19 @@ without recipe amounts or photos; staff add those by editing each item.
 
 ## 2. Configure the site
 
-Open [`js/config.js`](js/config.js) and replace the two placeholders:
+Open [`js/config.js`](js/config.js) and replace the Supabase placeholders:
 
 ```js
 const SUPABASE_URL = "https://YOUR_PROJECT_REF.supabase.co";
 const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
 ```
+
+To enable delivery address suggestions, create a Geoapify account and set
+`GEOAPIFY_API_KEY` in the same file to an API key from your project dashboard.
+This key is used by the browser and is therefore public; do not use a
+private/service key. Without it, customers can still enter their address
+manually. Geoapify account plans may have usage limits; see the
+[current plan details](https://www.geoapify.com/pricing/).
 
 For local development:
 
@@ -173,6 +180,12 @@ jobs:
 - Fetches `categories` and `menu_items` from Supabase (public RLS allows reads).
 - Cart state is kept in `localStorage` (quantities, totals).
 - At checkout, customers pick a **pickup slot** (or delivery address).
+- Delivery uses separate street, optional apartment/floor, city, state/region,
+  postal code, and country fields. Geoapify suggestions start after three
+  characters and are not restricted to a country or service area. Manual entry
+  remains available if there is no match. The formatted address is stored in
+  the existing `orders.address` field. Suggestions are geocoding results, not
+  postal deliverability verification.
 - Checkout reserves slot capacity via the `check_and_reserve_slot` RPC, then
   inserts into `orders` and `order_items` (public RLS allows inserts).
 - A confirmation screen shows the unique `tracking_id`.

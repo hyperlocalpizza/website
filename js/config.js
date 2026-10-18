@@ -21,6 +21,9 @@
 const SUPABASE_URL = "https://qiqjqqejegsworbdbjva.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_vKdnmcbja8fqpPg04RAixA_DwI0kkfM";
 
+// Geoapify API key used by the storefront address autocomplete.
+const GEOAPIFY_API_KEY = "c60bdfe865104d31b6af3b59264a2515";
+
 // Create a single shared client instance.
 // The Supabase CDN script may not have finished loading when this file runs,
 // so wait until `window.supabase` is available before creating the client.
@@ -42,7 +45,7 @@ function initClient() {
   });
   window.VIPizza = window.VIPizza || {};
   window.VIPizza.supabase = supabase;
-  window.VIPizza.config = { SUPABASE_URL, SUPABASE_ANON_KEY };
+  window.VIPizza.config = { SUPABASE_URL, SUPABASE_ANON_KEY, GEOAPIFY_API_KEY };
   return supabase;
 }
 
