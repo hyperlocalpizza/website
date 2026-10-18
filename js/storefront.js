@@ -88,6 +88,11 @@
     else cart[id] = next;
     saveCart();
     renderCart();
+    const menuControl = [...document.querySelectorAll(".menu-card .qty-control")]
+      .find((control) => control.dataset.id === id);
+    if (menuControl) {
+      menuControl.querySelector(".qty-value").textContent = cart[id] || 0;
+    }
   }
 
   // ---------------------------------------------------------------------------
